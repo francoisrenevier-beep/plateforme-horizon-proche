@@ -1,0 +1,121 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Palette du produit — déclarée exactement selon la spécification */
+  --color-teal-900: var(--teal-900);
+  --color-teal-700: var(--teal-700);
+  --color-teal-100: var(--teal-100);
+  --color-teal-50: var(--teal-50);
+  --color-creme: var(--creme);
+  --color-sable: var(--sable);
+  --color-sable-2: var(--sable-2);
+  --color-encre: var(--encre);
+  --color-encre-2: var(--encre-2);
+  --color-rouille: var(--rouille);
+  --color-ocre: var(--ocre);
+
+  /* Mappage des tokens shadcn sur la palette */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-lora), ui-serif, Georgia, serif;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-card: 0 1px 3px rgba(22, 78, 78, 0.06);
+}
+
+:root {
+  color-scheme: light;
+
+  --teal-900: #164e4e;
+  --teal-700: #1f6b6b;
+  --teal-100: #d4e8e6;
+  --teal-50: #eaf3f2;
+  --creme: #faf8f4;
+  --sable: #f2ede4;
+  --sable-2: #e5dcc9;
+  --encre: #2a2a28;
+  --encre-2: #6b6862;
+  --rouille: #8f3a24;
+  --ocre: #9a7b3f;
+
+  --background: var(--creme);
+  --foreground: var(--encre);
+  --card: #ffffff;
+  --card-foreground: var(--encre);
+  --popover: #ffffff;
+  --popover-foreground: var(--encre);
+  --primary: var(--teal-900);
+  --primary-foreground: #ffffff;
+  --secondary: var(--sable);
+  --secondary-foreground: var(--encre);
+  --muted: var(--sable);
+  --muted-foreground: var(--encre-2);
+  --accent: var(--teal-100);
+  --accent-foreground: var(--teal-900);
+  --destructive: var(--rouille);
+  --border: var(--sable-2);
+  --input: var(--sable-2);
+  --ring: var(--teal-700);
+  --radius: 12px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply bg-background;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif;
+    font-weight: 500;
+  }
+  /* Focus visible et net — accessibilité non négociable */
+  :focus-visible {
+    outline: 2px solid var(--teal-700);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* Étiquette : sans-serif 13px, légèrement espacée, jamais en majuscules */
+.etiquette {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--encre-2);
+}
