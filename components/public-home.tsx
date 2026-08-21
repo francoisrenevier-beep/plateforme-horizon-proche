@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     question: 'Que se passe-t-il si je me trompe de date ?',
-    answer: 'Vous pouvez modifier une date et sa source. Repères ne remplace pas la vérification du courrier original et ne transforme pas une date incertaine en urgence.',
+    answer: 'Vous pouvez modifier une date et sa source. Horizon Proche ne remplace pas la vérification du courrier original et ne transforme pas une date incertaine en urgence.',
   },
   {
     question: 'Mon curateur ou mon assistante sociale peut-il voir mon dossier ?',
@@ -56,11 +56,11 @@ const faqs = [
   },
   {
     question: 'Est-ce que cela fonctionne hors du canton de Vaud ?',
-    answer: 'Repères est conçu pour la Suisse romande. Les démarches et les autorités varient selon le canton ; les informations cantonales sont indiquées lorsqu’elles sont connues.',
+    answer: 'Horizon Proche est conçu pour la Suisse romande. Les démarches et les autorités varient selon le canton ; les informations cantonales sont indiquées lorsqu’elles sont connues.',
   },
   {
-    question: 'Qui a créé Repères ?',
-    answer: 'Repères est développé pour les proches aidants en Suisse romande, avec une attention particulière portée aux démarches réelles et aux informations faciles à vérifier.',
+    question: 'Qui a créé Horizon Proche ?',
+    answer: 'Horizon Proche est développé pour les proches aidants en Suisse romande, avec une attention particulière portée aux démarches réelles et aux informations faciles à vérifier.',
   },
 ]
 
@@ -109,7 +109,7 @@ export default function PublicHome() {
       <section className="mx-auto max-w-[1100px] px-5 pb-14 pt-16 md:px-10 md:pb-20 md:pt-24">
         <div className="max-w-3xl animate-[fade-in_500ms_ease-out_both]">
           <p className="etiquette text-teal-700">Pour les proches aidants en Suisse romande</p>
-          <h1 className="mt-5 max-w-3xl font-serif text-4xl leading-tight tracking-tight text-teal-900 sm:text-5xl md:text-6xl">Vous accompagnez un proche. Repères tient le fil des démarches.</h1>
+          <h1 className="mt-5 max-w-3xl font-serif text-4xl leading-tight tracking-tight text-teal-900 sm:text-5xl md:text-6xl">Vous accompagnez un proche. Horizon Proche tient le fil des démarches.</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-encre-2 sm:text-xl">Les délais, les documents et les étapes à venir, rassemblés dans un seul dossier, pour vous aider à avancer sans porter toute l’organisation dans votre tête.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link href="/accueil" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-teal-900 px-6 font-medium text-primary-foreground transition-colors hover:bg-teal-700">[CTA_PRINCIPAL] <ArrowRight aria-hidden="true" data-icon="inline-end" /></Link>
@@ -128,20 +128,20 @@ export default function PublicHome() {
       </section>
 
       <section className="mx-auto max-w-[1100px] px-5 py-16 md:px-10 md:py-24">
-        <div className="max-w-2xl"><p className="etiquette">Ce que fait Repères</p><h2 className="mt-3 font-serif text-3xl text-teal-900 sm:text-4xl">Moins de recherche. Plus de visibilité sur la prochaine étape.</h2></div>
+        <div className="max-w-2xl"><p className="etiquette">Ce que fait Horizon Proche</p><h2 className="mt-3 font-serif text-3xl text-teal-900 sm:text-4xl">Moins de recherche. Plus de visibilité sur la prochaine étape.</h2></div>
         <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2">{functions.map((item) => <article key={item.verb} className="flex gap-5 border-t border-sable-2 pt-5"><span className="font-mono text-sm font-semibold text-teal-700">{item.verb}</span><div className="flex flex-col gap-2"><h3 className="text-xl font-semibold text-encre">{item.title}</h3><p className="text-[17px] leading-7 text-encre-2">{item.text}</p></div></article>)}</div>
-        <div className="mt-14 border-l-2 border-ocre bg-sable px-5 py-5 sm:px-7"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-5"><div className="shrink-0"><DeadlineBadge /><span className="mx-2 text-encre-2">vs.</span><DeadlineBadge recommended /></div><p className="text-[17px] leading-7 text-encre-2">Cette distinction est volontaire. Repères vous aide à voir ce qui doit être fait, sans fabriquer de fausses urgences autour de chaque étape.</p></div></div>
+        <div className="mt-14 border-l-2 border-ocre bg-sable px-5 py-5 sm:px-7"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-5"><div className="shrink-0"><DeadlineBadge /><span className="mx-2 text-encre-2">vs.</span><DeadlineBadge recommended /></div><p className="text-[17px] leading-7 text-encre-2">Cette distinction est volontaire. Horizon Proche vous aide à voir ce qui doit être fait, sans fabriquer de fausses urgences autour de chaque étape.</p></div></div>
       </section>
 
       <section className="border-y border-sable-2 bg-teal-50/60"><div className="mx-auto max-w-[1100px] px-5 py-16 md:px-10 md:py-20"><div className="grid gap-10 md:grid-cols-[0.8fr_1.2fr] md:items-start"><div><p className="etiquette">Vos données</p><h2 className="mt-3 font-serif text-3xl text-teal-900 sm:text-4xl">Vous gardez la main.</h2></div><div className="flex flex-col gap-5 text-[17px] leading-7 text-encre-2"><p className="flex gap-3"><LockKeyhole className="mt-1 shrink-0 text-teal-700" aria-hidden="true" />Les informations restent accessibles uniquement aux personnes à qui vous donnez un accès.</p><p><strong className="font-semibold text-encre">[HEBERGEMENT_ET_LPD]</strong> Nous détaillerons ici où vos données sont hébergées et comment elles sont protégées selon le droit suisse.</p><p>Vous pouvez retirer un accès accordé, exporter votre dossier ou demander sa suppression.</p></div></div></div></section>
 
-      <section className="mx-auto max-w-[1100px] px-5 py-16 md:px-10 md:py-20"><div className="grid gap-10 md:grid-cols-2"><div><p className="etiquette">En toute clarté</p><h2 className="mt-3 font-serif text-3xl text-teal-900">Ce que Repères ne fait pas.</h2></div><ul className="flex flex-col gap-4 text-[17px] leading-7 text-encre-2"><li className="flex gap-3"><Check className="mt-1 shrink-0 text-teal-700" aria-hidden="true" />Repères ne donne pas de conseil juridique.</li><li className="flex gap-3"><Check className="mt-1 shrink-0 text-teal-700" aria-hidden="true" />Repères ne remplit pas les formulaires à votre place.</li><li className="flex gap-3"><Check className="mt-1 shrink-0 text-teal-700" aria-hidden="true" />Repères ne remplace ni le curateur, ni l’assistant social, ni le médecin. Il vous aide à savoir quoi faire, quand, et avec quels documents en main.</li></ul></div></section>
+      <section className="mx-auto max-w-[1100px] px-5 py-16 md:px-10 md:py-20"><div className="grid gap-10 md:grid-cols-2"><div><p className="etiquette">En toute clarté</p><h2 className="mt-3 font-serif text-3xl text-teal-900">Ce que Horizon Proche ne fait pas.</h2></div><ul className="flex flex-col gap-4 text-[17px] leading-7 text-encre-2"><li className="flex gap-3"><Check className="mt-1 shrink-0 text-teal-700" aria-hidden="true" />Horizon Proche ne donne pas de conseil juridique.</li><li className="flex gap-3"><Check className="mt-1 shrink-0 text-teal-700" aria-hidden="true" />Horizon Proche ne remplit pas les formulaires à votre place.</li><li className="flex gap-3"><Check className="mt-1 shrink-0 text-teal-700" aria-hidden="true" />Horizon Proche ne remplace ni le curateur, ni l’assistant social, ni le médecin. Il vous aide à savoir quoi faire, quand, et avec quels documents en main.</li></ul></div></section>
 
       <section className="border-y border-sable-2 bg-sable/50"><div className="mx-auto max-w-[1100px] px-5 py-16 md:px-10 md:py-20"><div className="mx-auto max-w-2xl text-center"><p className="etiquette">Accès et abonnement</p><h2 className="mt-3 font-serif text-3xl text-teal-900 sm:text-4xl">Un dossier simple, sans grille compliquée.</h2><p className="mt-5 text-[17px] leading-7 text-encre-2">[TARIF] Abonnement mensuel unique. [À PRÉCISER : période d’essai et ce qui arrive aux documents à la fin de l’abonnement.]</p><Link href="/accueil" className="mt-8 inline-flex min-h-12 items-center justify-center rounded-md bg-teal-900 px-6 font-medium text-primary-foreground hover:bg-teal-700">[CTA_PRINCIPAL]</Link></div></div></section>
 
       <section className="mx-auto max-w-[820px] px-5 py-16 md:px-10 md:py-24"><p className="etiquette">Questions fréquentes</p><h2 className="mt-3 font-serif text-3xl text-teal-900 sm:text-4xl">Avant de commencer</h2><div className="mt-8 flex flex-col">{faqs.map((faq) => <details key={faq.question} className="group border-t border-sable-2 py-5"><summary className="cursor-pointer list-none pr-8 text-lg font-semibold text-encre marker:content-none group-open:text-teal-900">{faq.question}<span className="float-right text-2xl font-normal text-teal-700" aria-hidden="true">+</span></summary><p className="mt-3 max-w-2xl text-[17px] leading-7 text-encre-2">{faq.answer}</p></details>)}</div></section>
 
-      <section className="bg-teal-900 text-primary-foreground"><div className="mx-auto flex max-w-[1100px] flex-col gap-6 px-5 py-16 md:px-10 md:py-20"><h2 className="max-w-2xl font-serif text-3xl leading-tight sm:text-4xl">Vous accompagnez un proche. Repères tient le fil des démarches.</h2><Link href="/accueil" className="inline-flex min-h-12 w-fit items-center justify-center rounded-md bg-creme px-6 font-medium text-teal-900 hover:bg-sable">[CTA_PRINCIPAL]</Link></div></section>
+      <section className="bg-teal-900 text-primary-foreground"><div className="mx-auto flex max-w-[1100px] flex-col gap-6 px-5 py-16 md:px-10 md:py-20"><h2 className="max-w-2xl font-serif text-3xl leading-tight sm:text-4xl">Vous accompagnez un proche. Horizon Proche tient le fil des démarches.</h2><Link href="/accueil" className="inline-flex min-h-12 w-fit items-center justify-center rounded-md bg-creme px-6 font-medium text-teal-900 hover:bg-sable">[CTA_PRINCIPAL]</Link></div></section>
     </div>
   )
 }

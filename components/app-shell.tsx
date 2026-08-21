@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="flex size-9 items-center justify-center rounded-full bg-teal-100 font-serif text-teal-900">
               R
             </span>
-            <span className="font-serif text-lg text-teal-900">Repères</span>
+            <span className="font-serif text-lg text-teal-900">Horizon Proche</span>
           </header>
 
           <main className="mx-auto w-full max-w-[900px] px-5 py-8 md:px-10 md:py-12">{children}</main>

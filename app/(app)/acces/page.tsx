@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Shield, Clock, Eye, X } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Accès et rôles — Repères',
+  title: 'Accès et rôles — Horizon Proche',
 }
 
 const roleTons: Record<string, string> = {
