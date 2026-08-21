@@ -17,9 +17,16 @@ const lora = Lora({
 })
 
 export const metadata: Metadata = {
-  title: 'Repères — organiser l’accompagnement d’un proche',
+  title: 'Repères — tenir le fil des démarches d’un proche',
   description:
-    'Une application calme pour organiser les démarches, les documents et les échéances liés à l’accompagnement d’une personne dépendante en Suisse romande.',
+    'Repères aide les proches aidants en Suisse romande à suivre les délais, les documents et les prochaines étapes liés à l’accompagnement d’une personne dépendante.',
+  openGraph: {
+    title: 'Repères — tenir le fil des démarches d’un proche',
+    description:
+      'Les délais, les documents et les étapes à venir rassemblés dans un seul dossier, pour les proches aidants en Suisse romande.',
+    locale: 'fr_CH',
+    type: 'website',
+  },
   generator: 'v0.app',
 }
 
