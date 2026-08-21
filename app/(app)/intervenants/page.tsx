@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Phone, Mail, Copy, User } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Intervenants — Repères',
+  title: 'Intervenants — Horizon Proche',
 }
 
 export default function IntervenantsPage() {
