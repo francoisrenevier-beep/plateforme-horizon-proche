@@ -257,6 +257,157 @@ ces réponses en `[À COMPLÉTER]` tant qu'elles ne sont pas validées ici même
 Aucun écran de `(app)` ne doit être branché sur des données réelles avant que
 l'étape 1 soit close.
 
+---
+
+## §9 — Abonnement et paiement
+
+Décisions arrêtées. Ne pas les modifier, les contourner ni proposer
+d'alternative sans validation explicite.
+
+### 9.1 Modèle d'abonnement
+
+**L'abonnement s'accroche au compte utilisateur payeur, pas au bénéficiaire.**
+
+- Un utilisateur = un abonnement = un prix fixe.
+- Un abonnement ouvre le droit de créer jusqu'à **3 bénéficiaires** (dossiers).
+- **Payer pour ouvrir un dossier, gratuit pour être invité sur un dossier.**
+  Toute personne invitée sur un dossier (proche, curateur, éducateur,
+  professionnel) y accède sans abonnement, selon son rôle.
+- Le contrôle d'accès reste calculé par rôle sur le bénéficiaire. Seule la
+  facturation est rattachée au propriétaire du dossier.
+
+Rationnel : la valeur du produit vient du partage entre intervenants.
+Facturer les invités détruirait l'usage. Le dégressif par dossier a été
+écarté : la majorité des comptes auront 1 ou 2 dossiers, la complexité de
+synchronisation des quantités Stripe n'est pas justifiée.
+
+Le plafond de 3 est structurant : il empêche un service social ou une
+association d'utiliser un abonnement famille pour vingt dossiers. Ce public
+relève d'une offre distincte, non implémentée à ce stade.
+
+### 9.2 Schéma de données
+
+```sql
+create table abonnements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) not null unique,
+  stripe_customer_id text not null,
+  stripe_subscription_id text unique,
+  statut text not null,          -- trialing | active | past_due | canceled | incomplete
+  periode_fin timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table beneficiaires
+  add column proprietaire_user_id uuid references auth.users(id) not null;
+```
+
+- La contrainte `unique` sur `user_id` est **obligatoire** : un utilisateur,
+  un abonnement.
+- `statut` reflète strictement le statut Stripe. Ne jamais inventer de valeur
+  intermédiaire.
+- RLS sur `abonnements` : lecture par `user_id = auth.uid()` uniquement.
+  **Aucune écriture depuis le client.** Écriture réservée au service role
+  (webhook).
+
+### 9.3 Stripe Checkout hébergé
+
+- Utiliser **Stripe Checkout en mode redirection**, pas Elements ni tunnel
+  embarqué. Aucune donnée de carte ne transite par l'application.
+- Devise : **CHF**. Prix affichés TTC.
+- TWINT n'est **pas** disponible pour les abonnements récurrents chez Stripe.
+  Moyens de paiement récurrents : carte, prélèvement. Ne pas promettre TWINT
+  dans l'interface.
+- TVA : pas d'assujettissement sous 100 000 CHF de CA annuel. Ne pas
+  implémenter Stripe Tax à ce stade, mais ne pas afficher de prix HT.
+- La facture porte le nom du **payeur**, jamais celui du bénéficiaire
+  (confidentialité).
+
+### 9.4 Le webhook est la seule source de vérité
+
+**Interdiction absolue d'activer un accès depuis la page `success_url`.** Un
+utilisateur peut atteindre cette URL sans avoir payé.
+
+Route : `app/api/webhooks/stripe/route.ts`
+
+Événements à traiter :
+- `checkout.session.completed`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.payment_failed`
+
+Contraintes d'implémentation :
+- Lire le corps **brut** (`await req.text()`), jamais `.json()`, sinon la
+  vérification de signature échoue.
+- Vérifier la signature avec `stripe.webhooks.constructEvent`.
+- Écrire via le **service role** Supabase, jamais via le client authentifié.
+- Traitement **idempotent** : Stripe peut rejouer un événement. Se baser sur
+  `stripe_subscription_id` et l'état, pas sur un compteur.
+- Répondre 200 rapidement ; tout traitement long est différé.
+
+```ts
+export async function POST(req: Request) {
+  const body = await req.text()               // brut, obligatoire
+  const sig = req.headers.get('stripe-signature')!
+  const event = stripe.webhooks.constructEvent(
+    body, sig, process.env.STRIPE_WEBHOOK_SECRET!
+  )
+  // switch (event.type) → écriture via service role
+}
+```
+
+### 9.5 Contrôle d'accès (gating)
+
+- **Pas de vérification d'abonnement dans le middleware Next.** Le
+  middleware tourne sur l'edge ; un appel Supabase à chaque navigation est
+  coûteux.
+- Helper serveur unique, appelé dans le layout du groupe `(app)` ou par page
+  de dossier.
+- Règle : un dossier est accessible si l'abonnement de son
+  `proprietaire_user_id` a le statut `active` ou `trialing`.
+- Le rôle de la personne qui consulte détermine ce qu'elle voit ;
+  l'abonnement du propriétaire détermine si le dossier est ouvert. Les deux
+  sont distincts.
+
+### 9.6 Mode dégradé — jamais de blocage sec
+
+Si l'abonnement expire ou échoue :
+
+- **L'accès en lecture est conservé.**
+- **L'export des documents et du portrait « Bien m'accompagner » reste
+  possible.**
+- Seules les fonctions d'écriture, d'ajout de document et de partage sont
+  suspendues.
+
+Rationnel : bloquer l'accès à des documents administratifs déposés par une
+famille qui gère une situation de dépendance serait inacceptable sur le
+fond, et juridiquement discutable.
+
+### 9.7 Clôture de dossier
+
+Un dossier peut se clore dans un contexte de deuil ou de fin
+d'accompagnement. Comportement obligatoire :
+
+- Archivage → **sortie immédiate du décompte** des 3 dossiers.
+- Conservation en **lecture et export pendant au moins 12 mois**.
+- **Aucune relance automatique**, aucun e-mail marketing, aucune
+  notification d'échéance sur un dossier archivé.
+
+### 9.8 Essai
+
+- Essai de **30 jours**, sans carte bancaire.
+- Rationnel : le moment de valeur perçue (portrait A4 imprimable, première
+  échéance anticipée) n'apparaît pas en 14 jours sur un produit à cycle
+  long.
+- Statut Stripe `trialing` = accès complet.
+
+### 9.9 Prix
+
+Les montants restent des **placeholders** jusqu'à décision explicite. Ne pas
+coder de valeur en dur : lire depuis les variables d'environnement
+(`STRIPE_PRICE_ID`) et afficher le montant retourné par Stripe.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
