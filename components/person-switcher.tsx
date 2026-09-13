@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { ChevronDown, Plus, Check } from 'lucide-react'
-import { personnes } from '@/lib/demo-data'
-import { usePersonne } from '@/components/person-context'
+import { useDossier, LIMITE_DOSSIERS } from '@/lib/store'
+import { FormulairePersonne } from '@/components/formulaire-personne'
 import { cn } from '@/lib/utils'
 
 export function PersonSwitcher() {
-  const { personne, setPersonneId } = usePersonne()
+  const { personne, personnes, limiteAtteinte, actions } = useDossier()
   const [ouvert, setOuvert] = useState(false)
+  const [ajout, setAjout] = useState(false)
 
   return (
     <div className="relative">
@@ -24,7 +25,9 @@ export function PersonSwitcher() {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-serif text-lg text-teal-900">{personne.prenom}</span>
-          <span className="etiquette block">{personne.age} ans</span>
+          <span className="etiquette block">
+            {personne.age} ans{personne.archive ? ' · dossier archivé' : ''}
+          </span>
         </span>
         <ChevronDown className={cn('size-4 text-encre-2 transition-transform', ouvert && 'rotate-180')} aria-hidden />
       </button>
@@ -41,7 +44,7 @@ export function PersonSwitcher() {
               role="menuitemradio"
               aria-checked={p.id === personne.id}
               onClick={() => {
-                setPersonneId(p.id)
+                actions.setPersonneId(p.id)
                 setOuvert(false)
               }}
               className="flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-teal-50"
@@ -59,15 +62,27 @@ export function PersonSwitcher() {
           <button
             type="button"
             role="menuitem"
+            onClick={() => {
+              setOuvert(false)
+              setAjout(true)
+            }}
             className="flex w-full items-center gap-3 border-t border-sable-2 px-3 py-3 text-left text-[15px] text-teal-700 transition-colors hover:bg-teal-50"
           >
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-sable-2">
               <Plus className="size-4" aria-hidden />
             </span>
-            Ajouter une personne
+            <span className="min-w-0 flex-1">
+              Ajouter une personne
+              <span className="etiquette block">
+                {personnes.length} dossier{personnes.length > 1 ? 's' : ''} sur {LIMITE_DOSSIERS}
+                {limiteAtteinte ? ' — limite atteinte' : ''}
+              </span>
+            </span>
           </button>
         </div>
       )}
+
+      {ajout && <FormulairePersonne onClose={() => setAjout(false)} />}
     </div>
   )
 }

@@ -1,42 +1,65 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { MapPin, Clock, ChevronRight } from 'lucide-react'
-import { rendezVousNoah, type RendezVous } from '@/lib/demo-data'
+import { MapPin, Clock, ChevronRight, Plus } from 'lucide-react'
+import { useDossier } from '@/lib/store'
+import { aujourdhuiISO, formatDateLongue } from '@/lib/dates'
+import type { RendezVous } from '@/lib/demo-data'
+import { BoutonPrincipal } from '@/components/ui/formulaire'
+import { FormulaireRendezVous } from '@/components/formulaire-rendez-vous'
 
 export default function RendezVousPage() {
-  const aVenir = rendezVousNoah.filter((r) => r.statut === 'a-venir')
-  const passes = rendezVousNoah.filter((r) => r.statut === 'passe')
+  const { personne, dossier } = useDossier()
+  const [ajout, setAjout] = useState(false)
+  const auj = aujourdhuiISO()
+  const tries = [...dossier.rendezVous].sort((a, b) => a.dateISO.localeCompare(b.dateISO))
+  const aVenir = tries.filter((r) => r.dateISO >= auj)
+  const passes = tries.filter((r) => r.dateISO < auj).reverse()
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="font-serif text-[26px] text-teal-900">Rendez-vous</h1>
-        <p className="mt-1 text-encre-2">Ce qui se prépare et ce qui a été noté.</p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-[26px] text-teal-900">Rendez-vous</h1>
+          <p className="mt-1 text-encre-2">Ce qui se prépare et ce qui a été noté pour {personne.prenom}.</p>
+        </div>
+        <BoutonPrincipal onClick={() => setAjout(true)}>
+          <Plus className="size-4" aria-hidden />
+          Ajouter un rendez-vous
+        </BoutonPrincipal>
       </header>
 
       <section>
         <h2 className="etiquette mb-3">À venir</h2>
         <div className="flex flex-col gap-3">
+          {aVenir.length === 0 && (
+            <p className="rounded-lg border border-dashed border-sable-2 p-6 text-center text-[15px] text-encre-2">Aucun rendez-vous à venir.</p>
+          )}
           {aVenir.map((r) => (
             <CarteRdv key={r.id} rdv={r} />
           ))}
         </div>
       </section>
 
-      <section>
-        <h2 className="etiquette mb-3">Passés</h2>
-        <div className="flex flex-col gap-3">
-          {passes.map((r) => (
-            <CarteRdv key={r.id} rdv={r} />
-          ))}
-        </div>
-      </section>
+      {passes.length > 0 && (
+        <section>
+          <h2 className="etiquette mb-3">Passés</h2>
+          <div className="flex flex-col gap-3">
+            {passes.map((r) => (
+              <CarteRdv key={r.id} rdv={r} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {ajout && <FormulaireRendezVous onClose={() => setAjout(false)} />}
     </div>
   )
 }
 
 function CarteRdv({ rdv }: { rdv: RendezVous }) {
+  const enAttente = rdv.questions.filter((q) => !q.faite).length
   return (
     <Link
       href={`/rendez-vous/${rdv.id}`}
@@ -50,19 +73,21 @@ function CarteRdv({ rdv }: { rdv: RendezVous }) {
         <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px] text-encre">
           <span className="inline-flex items-center gap-1.5">
             <Clock className="size-4 text-encre-2" aria-hidden />
-            {rdv.date}
+            {formatDateLongue(rdv.dateISO)}
             {rdv.heure ? `, ${rdv.heure}` : ''}
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <MapPin className="size-4 text-encre-2" aria-hidden />
-            {rdv.lieu}
-          </span>
+          {rdv.lieu && (
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="size-4 text-encre-2" aria-hidden />
+              {rdv.lieu}
+            </span>
+          )}
         </div>
-        {rdv.questionsEnAttente ? (
+        {enAttente > 0 && (
           <span className="mt-2 inline-block rounded-full bg-teal-100 px-2.5 py-1 text-[13px] text-teal-900">
-            {rdv.questionsEnAttente} questions en attente
+            {enAttente} question{enAttente > 1 ? 's' : ''} en attente
           </span>
-        ) : null}
+        )}
       </div>
       <ChevronRight className="size-5 shrink-0 text-encre-2 transition-transform group-hover:translate-x-0.5" aria-hidden />
     </Link>

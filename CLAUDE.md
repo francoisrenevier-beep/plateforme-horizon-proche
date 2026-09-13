@@ -115,7 +115,28 @@ l'outil.
 D'après `package.json` : Next 16.3.0, React 19, Tailwind 4.3.3 (CSS-first,
 `@tailwindcss/postcss`, pas de `tailwind.config`), `shadcn` 4.8.0,
 `@base-ui/react` 1.5.0, `lucide-react` 1.16.0. Aucune dépendance Supabase
-présente pour l'instant — la maquette n'a pas de backend.
+présente pour l'instant — il n'y a pas de backend.
+
+### 3.1.1 Couche de données locale (état intermédiaire, septembre 2026)
+
+En attendant l'étape 1 de §8, toute l'application lit et écrit dans une
+**couche de données locale** : `lib/store.tsx` (`DossierProvider`,
+`useDossier()`, `useEcheances()`, `useChronologie()`), amorcée par
+`lib/demo-data.ts` (`creerEtatInitial()`), persistée dans `localStorage`
+(clé `horizon-proche:etat:v1`). Les sélecteurs purs (jalons calculés,
+avancement d'une démarche) sont dans `lib/selecteurs.ts`, sans React.
+
+Règles :
+- Les écrans ne parlent qu'à `useDossier()` et à ses `actions`. Aucun écran
+  n'importe directement les tableaux de démonstration (`documentsNoah`, etc.).
+- Le contenu de `(app)` n'est rendu qu'une fois l'état chargé côté client
+  (`pret`) : il dépend de la date du jour et du stockage local, un rendu
+  serveur créerait des écarts d'hydratation.
+- Le remplacement par Supabase se fera dans `lib/store.tsx` (et un adaptateur
+  de persistance), pas dans les écrans. Le modèle `DossierData` (un objet par
+  dossier) préfigure la table `beneficiaire` et ses tables filles.
+- Le plafond de 3 dossiers (§9.1) et l'archivage (§9.7) sont déjà appliqués
+  dans le store (`LIMITE_DOSSIERS`, `archiverPersonne`).
 
 ### 3.2 Visée **[À VALIDER — confirmer que ces choix tiennent toujours]**
 
@@ -186,13 +207,12 @@ vérifiée ne doit pas être publiée sans indication claire de son statut.
 | `/intervenants` | Contacts liés au dossier |
 | `/acces` | Accès et rôles — accès nommés et permanents |
 | `/partage` | Lien de consultation temporaire (durée limitée, révocable) — complémentaire à `/acces`, pas un doublon : un accès nommé (§2.4) donne une visibilité durable à une personne identifiée, un lien de partage donne une visibilité ponctuelle à qui le reçoit. Intégré à la navigation (`navBas`, après "Accès et rôles"). |
+| `/echeances` | Vue consolidée des échéances (délais + jalons), avec ajout, modification, suppression. Les jalons issus d'un parcours y apparaissent mais ne se modifient que depuis le parcours. |
+| `/parcours`, `/parcours/[id]` | **Parcours** : les grandes étapes d'une période de vie, dans l'ordre, expliquées une à une (voir §6.2). |
+| `/reglages` | Personne accompagnée (modification, archivage), titulaire, export JSON, réinitialisation des données de démonstration. |
 
-Présents dans la navigation (`app-shell.tsx`) mais **pas encore construits** :
-
-| Route | Écran |
-|---|---|
-| `/echeances` | Vue consolidée des échéances (délais + jalons, tous types) |
-| `/reglages` | Réglages du compte |
+Tous les écrans de `(app)` sont modifiables par la famille (ajout, édition,
+suppression) via la couche locale de §3.1.1.
 
 Hors `app/(app)/`, à créer (voir prompt d'amorçage, étape 3) :
 
@@ -231,6 +251,45 @@ dans `globals.css`), et le nom "Repères". Toute page future doit être vérifi�
 contre `globals.css` avant d'être considérée terminée — aucune classe de
 couleur qui n'y est pas déclarée.
 
+### 6.2 Parcours
+
+Un **parcours** (`lib/parcours.ts`) est distinct d'une fiche de démarche : la
+fiche explique *une* procédure ; le parcours ordonne *toutes* les étapes d'une
+période de vie (phases → étapes) à partir d'un repère du dossier (pour
+« Transition à la majorité » : la date des 18 ans, calculée depuis
+`naissanceISO`). Une étape porte : le moment conseillé (décalage en mois par
+rapport au repère, ou `null`), le pourquoi, ce qu'il y a à faire, vers qui se
+tourner (avec liens), les pièces, les points d'attention, ses sources avec
+statut de vérification, et le cas échéant un renvoi vers une fiche.
+
+Règles propres aux parcours :
+- Une étape ne génère **jamais** qu'un jalon conseillé (`genereJalon`), jamais
+  un délai légal. Les délais ne viennent que des courriers reçus (§2.2).
+- Une étape `questionOuverte` (protection de l'adulte) se suit avec « nous en
+  avons parlé », pas « fait » (§2.6).
+- Chaque étape cite ses sources (`sources[]`, `statut: 'verifiee' |
+  'a-verifier'`). Le parcours « Transition à la majorité » s'appuie sur le
+  *Memento handicap* de la DGCS (canton de Vaud, **document de travail**
+  remis en septembre 2026) et sur le droit fédéral (CC, LAI, LAFam, LAMal) ;
+  tout est marqué `a-verifier` tant qu'une relecture juridique n'a pas été
+  faite. Les projets pilotes que le memento demande de ne pas mentionner
+  (« Mon Plan », « Ma vie mon appart ») sont **exclus**.
+- Le suivi par la famille (statut par étape : à faire / fait / pas concerné,
+  note libre) vit dans `DossierData.parcours[parcoursId]`.
+- L'avancement de la démarche liée (`fiche.parcoursId`) se calcule sur les
+  étapes du parcours, pas sur les pièces.
+
+Prochains parcours envisagés **[À VALIDER]** : entrée en établissement d'un
+parent âgé, sortie d'hospitalisation, fin de scolarité spécialisée.
+
+### 6.3 Statut de vérification des fiches
+
+`Fiche.statut` (`verifiee` | `a-verifier` | `brouillon`) est affiché en
+en-tête de chaque fiche (`components/statut-fiche.tsx`). Les fiches héritées
+de la maquette v0 sont `a-verifier` ; « Entrée en EMS » est un `brouillon`
+rempli de `[À COMPLÉTER]`. Une fiche ne passe à `verifiee` qu'après relecture
+datée contre sa source.
+
 ---
 
 ## §7 — Sécurité et confidentialité **[À VALIDER dans son ensemble]**
@@ -255,7 +314,8 @@ ces réponses en `[À COMPLÉTER]` tant qu'elles ne sont pas validées ici même
    réel en place.
 
 Aucun écran de `(app)` ne doit être branché sur des données réelles avant que
-l'étape 1 soit close.
+l'étape 1 soit close. La couche locale de §3.1.1 n'est pas un branchement sur
+des données réelles : c'est l'interface que l'étape 4 remplira.
 
 ---
 

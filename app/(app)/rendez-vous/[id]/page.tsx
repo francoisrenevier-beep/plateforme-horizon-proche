@@ -1,20 +1,15 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import {
-  ArrowLeft,
-  Plus,
-  Square,
-  CheckSquare,
-  ImageIcon,
-  Printer,
-  Share2,
-  BellPlus,
-  GripVertical,
-} from 'lucide-react'
-import { rendezVousNoah, questionsRdv, piecesAEmporter } from '@/lib/demo-data'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, Plus, Square, CheckSquare, ImageIcon, Printer, Share2, BellPlus, Trash2, Pencil } from 'lucide-react'
+import { useDossier } from '@/lib/store'
+import { aujourdhuiISO, formatDateLongue, formatRelatif } from '@/lib/dates'
+import type { RendezVous } from '@/lib/demo-data'
+import { Entree, ZoneTexte, BoutonPrincipal, BoutonSecondaire, BoutonSuppression } from '@/components/ui/formulaire'
+import { FormulaireRendezVous } from '@/components/formulaire-rendez-vous'
+import { FormulaireEcheance } from '@/components/formulaire-echeance'
 import { cn } from '@/lib/utils'
 
 const onglets = ['Avant', 'Pendant', 'Après'] as const
@@ -22,10 +17,29 @@ type Onglet = (typeof onglets)[number]
 
 export default function RdvDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const rdv = rendezVousNoah.find((r) => r.id === id)
-  if (!rdv) notFound()
+  const router = useRouter()
+  const { dossier, actions } = useDossier()
+  const rdv = dossier.rendezVous.find((r) => r.id === id)
 
   const [onglet, setOnglet] = useState<Onglet>('Avant')
+  const [edition, setEdition] = useState(false)
+  const [suppression, setSuppression] = useState(false)
+
+  useEffect(() => {
+    if (rdv && rdv.dateISO < aujourdhuiISO()) setOnglet('Après')
+  }, [rdv?.id, rdv?.dateISO]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!rdv) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Link href="/rendez-vous" className="inline-flex items-center gap-2 text-[15px] text-teal-700 hover:underline">
+          <ArrowLeft className="size-4" aria-hidden />
+          Tous les rendez-vous
+        </Link>
+        <p className="rounded-lg border border-dashed border-sable-2 p-8 text-center text-encre-2">Ce rendez-vous n’existe plus.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,12 +48,32 @@ export default function RdvDetail({ params }: { params: Promise<{ id: string }> 
         Tous les rendez-vous
       </Link>
 
-      <header>
-        <h1 className="font-serif text-[26px] text-teal-900">{rdv.intervenant}</h1>
-        <p className="mt-1 text-encre-2">
-          {rdv.fonction} · {rdv.date}
-          {rdv.heure ? `, ${rdv.heure}` : ''} · {rdv.lieu}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-[26px] text-teal-900">{rdv.intervenant}</h1>
+          <p className="mt-1 text-encre-2">
+            {rdv.fonction && `${rdv.fonction} · `}
+            {formatDateLongue(rdv.dateISO)}
+            {rdv.heure ? `, ${rdv.heure}` : ''}
+            {rdv.lieu && ` · ${rdv.lieu}`}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setEdition(true)} className="inline-flex items-center gap-1.5 text-[13px] text-encre-2 hover:text-teal-700">
+            <Pencil className="size-3.5" aria-hidden />
+            Modifier
+          </button>
+          <BoutonSuppression
+            className="h-9"
+            arme={suppression}
+            onArmer={() => setSuppression(true)}
+            onAnnuler={() => setSuppression(false)}
+            onConfirmer={() => {
+              actions.supprimerRendezVous(rdv.id)
+              router.push('/rendez-vous')
+            }}
+          />
+        </div>
       </header>
 
       {/* Onglets */}
@@ -60,22 +94,33 @@ export default function RdvDetail({ params }: { params: Promise<{ id: string }> 
         ))}
       </div>
 
-      {onglet === 'Avant' && <Avant />}
-      {onglet === 'Pendant' && <Pendant />}
-      {onglet === 'Après' && <Apres />}
+      {onglet === 'Avant' && <Avant rdv={rdv} />}
+      {onglet === 'Pendant' && <Pendant rdv={rdv} />}
+      {onglet === 'Après' && <Apres rdv={rdv} />}
+
+      {edition && <FormulaireRendezVous rdv={rdv} onClose={() => setEdition(false)} />}
     </div>
   )
 }
 
-function Avant() {
-  const [questions, setQuestions] = useState(questionsRdv)
+function Avant({ rdv }: { rdv: RendezVous }) {
+  const { dossier, actions } = useDossier()
   const [nouvelle, setNouvelle] = useState('')
+  const [nouvellePiece, setNouvellePiece] = useState('')
+  const [changements, setChangements] = useState(rdv.changements)
 
   const ajouter = () => {
     const t = nouvelle.trim()
     if (!t) return
-    setQuestions((q) => [...q, { id: `q${Date.now()}`, texte: t, ajoutee: 'ajoutée à l’instant', faite: false }])
+    actions.ajouterQuestionRdv(rdv.id, t)
     setNouvelle('')
+  }
+  const ajouterPiece = () => {
+    const t = nouvellePiece.trim()
+    if (!t) return
+    const lie = dossier.documents.some((d) => t.toLowerCase().includes(d.titre.toLowerCase()))
+    actions.ajouterPieceRdv(rdv.id, t, lie)
+    setNouvellePiece('')
   }
 
   return (
@@ -84,43 +129,40 @@ function Avant() {
       <section className="rounded-lg border border-sable-2 bg-card p-6 shadow-[0_1px_3px_rgba(22,78,78,0.06)]">
         <h2 className="font-serif text-xl text-teal-900">Mes questions</h2>
         <div className="mt-4 flex gap-2">
-          <input
+          <Entree
             value={nouvelle}
             onChange={(e) => setNouvelle(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) ajouter()
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) ajouter()
             }}
             placeholder="Une question vous vient ? Notez-la maintenant."
             aria-label="Nouvelle question"
-            className="h-11 flex-1 rounded-md border border-sable-2 bg-card px-4 text-[15px] outline-none placeholder:text-encre-2"
+            className="flex-1"
           />
-          <button
-            type="button"
-            onClick={ajouter}
-            className="inline-flex h-11 items-center gap-2 rounded-md bg-teal-900 px-5 text-[15px] font-medium text-primary-foreground hover:bg-teal-700"
-          >
+          <BoutonPrincipal onClick={ajouter}>
             <Plus className="size-4" aria-hidden />
             Ajouter
-          </button>
+          </BoutonPrincipal>
         </div>
 
         <ul className="mt-4 flex flex-col divide-y divide-sable-2">
-          {questions.map((q) => (
+          {rdv.questions.length === 0 && <li className="py-3 text-[15px] text-encre-2">Aucune question notée.</li>}
+          {rdv.questions.map((q) => (
             <li key={q.id} className="flex items-center gap-3 py-3">
-              <GripVertical className="size-4 shrink-0 cursor-grab text-encre-2" aria-hidden />
               <button
                 type="button"
-                onClick={() => setQuestions((qs) => qs.map((x) => (x.id === q.id ? { ...x, faite: !x.faite } : x)))}
+                onClick={() => actions.basculerQuestionRdv(rdv.id, q.id)}
                 aria-pressed={q.faite}
                 aria-label={q.faite ? 'Marquer non traitée' : 'Marquer traitée'}
                 className="shrink-0 text-teal-700"
               >
                 {q.faite ? <CheckSquare className="size-5" aria-hidden /> : <Square className="size-5 text-encre-2" aria-hidden />}
               </button>
-              <span className={cn('min-w-0 flex-1 text-[15px] text-encre', q.faite && 'text-encre-2 line-through')}>
-                {q.texte}
-              </span>
-              <span className="etiquette shrink-0">{q.ajoutee}</span>
+              <span className={cn('min-w-0 flex-1 text-[15px] text-encre', q.faite && 'text-encre-2 line-through')}>{q.texte}</span>
+              <span className="etiquette shrink-0">ajoutée {formatRelatif(q.ajouteeLe)}</span>
+              <button type="button" onClick={() => actions.supprimerQuestionRdv(rdv.id, q.id)} aria-label="Supprimer la question" className="shrink-0 text-encre-2 hover:text-rouille">
+                <Trash2 className="size-4" aria-hidden />
+              </button>
             </li>
           ))}
         </ul>
@@ -131,33 +173,66 @@ function Avant() {
       <section className="rounded-lg border border-sable-2 bg-card p-6 shadow-[0_1px_3px_rgba(22,78,78,0.06)]">
         <h2 className="font-serif text-xl text-teal-900">À emporter</h2>
         <ul className="mt-4 flex flex-col gap-2">
-          {piecesAEmporter.map((p) => (
+          {rdv.pieces.length === 0 && <li className="text-[15px] text-encre-2">Rien à emporter pour l’instant.</li>}
+          {rdv.pieces.map((p) => (
             <li key={p.id} className="flex items-center gap-3">
-              {p.lie ? <CheckSquare className="size-5 shrink-0 text-teal-700" aria-hidden /> : <Square className="size-5 shrink-0 text-encre-2" aria-hidden />}
+              <button type="button" onClick={() => actions.basculerPieceRdv(rdv.id, p.id)} aria-pressed={p.lie} aria-label={p.lie ? 'Marquer non prête' : 'Marquer prête'} className="shrink-0">
+                {p.lie ? <CheckSquare className="size-5 text-teal-700" aria-hidden /> : <Square className="size-5 text-encre-2" aria-hidden />}
+              </button>
               <span className="flex-1 text-[15px] text-encre">{p.texte}</span>
               {p.lie && (
                 <span className="inline-flex items-center gap-1.5 rounded-md bg-teal-50 px-2.5 py-1 text-[13px] text-teal-700">
                   <ImageIcon className="size-3.5" aria-hidden />
-                  Dans le coffre
+                  Prête
                 </span>
               )}
+              <button type="button" onClick={() => actions.supprimerPieceRdv(rdv.id, p.id)} aria-label="Retirer" className="shrink-0 text-encre-2 hover:text-rouille">
+                <Trash2 className="size-4" aria-hidden />
+              </button>
             </li>
           ))}
         </ul>
+        <div className="mt-4 flex gap-2">
+          <Entree
+            value={nouvellePiece}
+            onChange={(e) => setNouvellePiece(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) ajouterPiece()
+            }}
+            list="pieces-coffre"
+            placeholder="Ajouter une pièce à emporter"
+            aria-label="Nouvelle pièce"
+            className="flex-1"
+          />
+          <datalist id="pieces-coffre">
+            {dossier.documents.map((d) => (
+              <option key={d.id} value={d.titre} />
+            ))}
+          </datalist>
+          <BoutonSecondaire onClick={ajouterPiece}>
+            <Plus className="size-4" aria-hidden />
+            Ajouter
+          </BoutonSecondaire>
+        </div>
       </section>
 
       {/* Ce qui a changé */}
       <section className="rounded-lg border border-sable-2 bg-card p-6 shadow-[0_1px_3px_rgba(22,78,78,0.06)]">
         <h2 className="font-serif text-xl text-teal-900">Ce qui a changé depuis la dernière fois</h2>
-        <textarea
+        <ZoneTexte
           rows={3}
+          value={changements}
+          onChange={(e) => setChangements(e.target.value)}
+          onBlur={() => changements !== rdv.changements && actions.modifierRendezVous(rdv.id, { changements })}
           placeholder="Notez ce que le professionnel devrait savoir…"
-          className="mt-3 w-full resize-none rounded-md border border-sable-2 bg-card p-3 text-[15px] outline-none placeholder:text-encre-2"
+          className="mt-3"
         />
+        <p className="etiquette mt-2">Enregistré automatiquement.</p>
       </section>
 
       <button
         type="button"
+        onClick={() => window.print()}
         className="inline-flex h-11 w-fit items-center gap-2 rounded-md border border-sable-2 px-5 text-[15px] text-encre hover:bg-teal-50"
       >
         <Printer className="size-4" aria-hidden />
@@ -167,60 +242,109 @@ function Avant() {
   )
 }
 
-function Pendant() {
-  const champs = ['Ce qui a été dit', 'Ce qui a été décidé', 'Ce qui a été prescrit', 'Prochaine étape']
+function Pendant({ rdv }: { rdv: RendezVous }) {
+  const { actions } = useDossier()
+  const champs: { cle: keyof RendezVous['notes']; label: string }[] = [
+    { cle: 'dit', label: 'Ce qui a été dit' },
+    { cle: 'decide', label: 'Ce qui a été décidé' },
+    { cle: 'prescrit', label: 'Ce qui a été prescrit' },
+    { cle: 'prochaine', label: 'Prochaine étape' },
+  ]
+  const [notes, setNotes] = useState(rdv.notes)
   return (
     <div className="flex flex-col gap-5">
       {champs.map((c) => (
-        <section key={c}>
-          <label className="font-serif text-lg text-teal-900" htmlFor={c}>
-            {c}
+        <section key={c.cle}>
+          <label className="font-serif text-lg text-teal-900" htmlFor={`note-${c.cle}`}>
+            {c.label}
           </label>
-          <textarea
-            id={c}
+          <ZoneTexte
+            id={`note-${c.cle}`}
             rows={3}
-            className="mt-2 w-full resize-none rounded-md border border-sable-2 bg-card p-3 text-[15px] outline-none"
+            value={notes[c.cle]}
+            onChange={(e) => setNotes((n) => ({ ...n, [c.cle]: e.target.value }))}
+            onBlur={() => notes[c.cle] !== rdv.notes[c.cle] && actions.modifierRendezVous(rdv.id, { notes })}
+            className="mt-2"
           />
         </section>
       ))}
+      <p className="etiquette">Enregistré automatiquement à chaque sortie de champ.</p>
     </div>
   )
 }
 
-function Apres() {
+function Apres({ rdv }: { rdv: RendezVous }) {
+  const { actions } = useDossier()
+  const [nouvelle, setNouvelle] = useState('')
+  const [rappel, setRappel] = useState(false)
+
+  const ajouter = () => {
+    const t = nouvelle.trim()
+    if (!t) return
+    actions.ajouterDecisionRdv(rdv.id, t)
+    setNouvelle('')
+  }
+
+  const decisionsDeduites = [rdv.notes.decide, rdv.notes.prochaine].filter((t) => t.trim() && !rdv.decisions.includes(t.trim()))
+
   return (
     <div className="flex flex-col gap-6">
       <section className="rounded-lg bg-teal-50 p-6">
         <h2 className="font-serif text-xl text-teal-900">Décisions du rendez-vous</h2>
         <ul className="mt-4 flex flex-col gap-3 text-[15px] leading-relaxed text-encre">
-          <li className="flex gap-3">
-            <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-teal-700" aria-hidden />
-            Poursuivre le suivi actuel, prochain point dans six mois.
-          </li>
-          <li className="flex gap-3">
-            <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-teal-700" aria-hidden />
-            Rédiger un certificat pour les transports scolaires.
-          </li>
+          {rdv.decisions.length === 0 && decisionsDeduites.length === 0 && <li className="text-encre-2">Rien n’a encore été noté.</li>}
+          {rdv.decisions.map((d, i) => (
+            <li key={`${d}-${i}`} className="flex items-start gap-3">
+              <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-teal-700" aria-hidden />
+              <span className="flex-1">{d}</span>
+              <button type="button" onClick={() => actions.supprimerDecisionRdv(rdv.id, i)} aria-label="Retirer" className="text-encre-2 hover:text-rouille">
+                <Trash2 className="size-4" aria-hidden />
+              </button>
+            </li>
+          ))}
+          {decisionsDeduites.map((d) => (
+            <li key={d} className="flex items-start gap-3 text-encre-2">
+              <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-sable-2" aria-hidden />
+              <span className="flex-1">
+                {d} <span className="etiquette">(noté pendant le rendez-vous)</span>
+              </span>
+              <button type="button" onClick={() => actions.ajouterDecisionRdv(rdv.id, d.trim())} className="text-[13px] text-teal-700 hover:underline">
+                Retenir
+              </button>
+            </li>
+          ))}
         </ul>
+        <div className="mt-4 flex gap-2">
+          <Entree
+            value={nouvelle}
+            onChange={(e) => setNouvelle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) ajouter()
+            }}
+            placeholder="Ajouter une décision"
+            aria-label="Nouvelle décision"
+            className="flex-1"
+          />
+          <BoutonSecondaire onClick={ajouter}>
+            <Plus className="size-4" aria-hidden />
+            Ajouter
+          </BoutonSecondaire>
+        </div>
       </section>
 
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="inline-flex h-11 items-center gap-2 rounded-md bg-teal-900 px-5 text-[15px] font-medium text-primary-foreground hover:bg-teal-700"
-        >
+        <BoutonPrincipal onClick={() => window.print()}>
           <Share2 className="size-4" aria-hidden />
           Partager le compte-rendu
-        </button>
-        <button
-          type="button"
-          className="inline-flex h-11 items-center gap-2 rounded-md border border-sable-2 px-5 text-[15px] text-encre hover:bg-teal-50"
-        >
+        </BoutonPrincipal>
+        <BoutonSecondaire onClick={() => setRappel(true)}>
           <BellPlus className="size-4" aria-hidden />
           Créer un rappel
-        </button>
+        </BoutonSecondaire>
       </div>
       <p className="etiquette">Un rappel ajoute un moment conseillé à votre chronologie.</p>
+
+      {rappel && <FormulaireEcheance natureInitiale="jalon" onClose={() => setRappel(false)} />}
     </div>
   )
 }

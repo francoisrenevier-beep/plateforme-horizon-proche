@@ -1,4 +1,11 @@
-// Contenu éditorial des fiches de démarche. Fictif, à visée de maquette.
+// Contenu éditorial des fiches de démarche.
+//
+// Statut de vérification (CLAUDE.md §2.5 et §5) : une fiche n'est « vérifiée » que lorsqu'une
+// relecture contre la source a été faite et datée. Les fiches héritées de la maquette v0 sont
+// marquées « à vérifier » : leur contenu est plausible mais n'a pas été confirmé.
+// Là où un fait n'est pas confirmé, le texte dit [À COMPLÉTER], jamais une valeur plausible.
+
+export type StatutFiche = 'verifiee' | 'a-verifier' | 'brouillon'
 
 export type PieceAFournir = {
   id: string
@@ -16,8 +23,12 @@ export type Fiche = {
   id: string
   titre: string
   canton: string
+  statut: StatutFiche
+  // Date de rédaction ou de dernière relecture
   verifieLe: string
   source: string
+  // Parcours (`lib/parcours.ts`) dont cette fiche est une étape, le cas échéant
+  parcoursId?: string
   moment: string
   changement: string
   q000decide: { autorite: string; intervenantId: string; cantonal: string }
@@ -37,8 +48,10 @@ export const fiches: Record<string, Fiche> = {
     id: 'transition',
     titre: 'Transition à la majorité',
     canton: 'Vaud',
+    statut: 'a-verifier',
     verifieLe: '2 juin 2026',
     source: 'vd.ch',
+    parcoursId: 'transition-majorite',
     moment:
       'Aux 18 ans de votre enfant, son statut change du jour au lendemain. Il devient juridiquement adulte. Ce qui était décidé par les parents ne l’est plus automatiquement, et plusieurs prestations doivent être réexaminées à ce moment-là.',
     changement:
@@ -96,6 +109,7 @@ export const fiches: Record<string, Fiche> = {
     id: 'api',
     titre: 'Renouvellement API',
     canton: 'Vaud',
+    statut: 'a-verifier',
     verifieLe: '2 juin 2026',
     source: 'vd.ch',
     moment:
@@ -119,6 +133,31 @@ export const fiches: Record<string, Fiche> = {
       'Respectez le délai figurant sur le courrier : un questionnaire renvoyé tard peut suspendre le versement.',
       'Décrivez une journée type complète, sans minimiser les difficultés par habitude.',
       'Joignez un rapport médical récent, il pèse lourd dans l’évaluation.',
+    ],
+  },
+  ems: {
+    id: 'ems',
+    titre: 'Entrée en EMS',
+    canton: 'Vaud',
+    statut: 'brouillon',
+    verifieLe: '13 septembre 2026',
+    source: '[À COMPLÉTER]',
+    moment:
+      'Lorsque le maintien à domicile n’est plus possible, une place en établissement médico-social est proposée, souvent à la sortie d’une hospitalisation. [À COMPLÉTER : cadre vaudois précis.]',
+    changement: '[À COMPLÉTER]',
+    q000decide: {
+      autorite: '[À COMPLÉTER]',
+      intervenantId: 'mi1',
+      cantonal: 'Dans le canton de Vaud : [À COMPLÉTER].',
+    },
+    pieces: [
+      { id: 'e1', texte: 'Décision de la caisse-maladie ou de l’AVS [À COMPLÉTER]' },
+      { id: 'e2', texte: 'Justificatifs de revenus et de fortune pour les prestations complémentaires' },
+    ],
+    duree: '[À COMPLÉTER]',
+    refus: '[À COMPLÉTER]',
+    erreurs: [
+      'Déposer la demande de prestations complémentaires trop tard : le financement de l’hébergement dépend souvent de cette décision.',
     ],
   },
 }

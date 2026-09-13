@@ -1,4 +1,10 @@
-// Données entièrement fictives pour la maquette. Aucun appel réseau.
+// Types du modèle de données et données de démonstration (entièrement fictives).
+// Aucun appel réseau. Les données servent d'amorce à la couche locale (`lib/store.tsx`),
+// qui les persiste dans le navigateur et les rend modifiables.
+//
+// Convention : toutes les dates sont en ISO (AAAA-MM-JJ) ; les libellés sont dérivés (`lib/dates.ts`).
+
+import { aujourdhuiISO, decalerJours, ageA, formatDateLongue } from '@/lib/dates'
 
 export type Nature = 'delai' | 'jalon'
 
@@ -8,122 +14,54 @@ export type Echeance = {
   titre: string
   // Provenance : pour un délai, le courrier lu ; pour un jalon, la règle de calendrier.
   provenance: string
-  // Date lisible affichée
-  date: string
-  // Date ISO pour le tri
+  // Date ISO, canonique
   dateISO: string
-  // Délai uniquement : jours restants
+  // Libellé libre facultatif (« dès maintenant ») ; sinon dérivé de dateISO selon la nature.
+  date?: string
+  // Délai uniquement : jours restants figés (utilisé sur la page publique pour un exemple stable).
+  // Dans l'application, le compte à rebours est toujours calculé à partir de dateISO.
   joursRestants?: number
   fait?: boolean
+  // Rattachements facultatifs
+  demarcheId?: string
+  documentId?: string
+  origine?: 'manuel' | 'document' | 'parcours' | 'rendez-vous'
 }
 
-export type Personne = {
+// Ce qui est saisi pour une personne accompagnée. L'âge, l'initiale et le libellé de
+// naissance sont dérivés (voir `enrichirPersonne`).
+export type PersonneBase = {
   id: string
   prenom: string
   nom: string
+  naissanceISO: string
+  contexte: string
+  // Dossier archivé (§9.7) : sort du décompte, reste lisible.
+  archive?: boolean
+}
+
+export type Personne = PersonneBase & {
   age: number
   naissance: string
   initiale: string
-  contexte: string
-  contexteCourt: string
-  demarchesActives: string[]
 }
 
-export const titulaire = {
-  prenom: 'Sandrine',
-  nom: 'Perret',
-  age: 47,
-  ville: 'Yverdon-les-Bains',
-  canton: 'VD',
+export function enrichirPersonne(p: PersonneBase): Personne {
+  return {
+    ...p,
+    age: ageA(p.naissanceISO),
+    naissance: formatDateLongue(p.naissanceISO),
+    initiale: (p.prenom.trim().charAt(0) || '?').toUpperCase(),
+  }
 }
 
-export const personnes: Personne[] = [
-  {
-    id: 'noah',
-    prenom: 'Noah',
-    nom: 'Perret',
-    age: 16,
-    naissance: '4 mars 2010',
-    initiale: 'N',
-    contexte:
-      'Trouble du spectre de l’autisme. Scolarisé en école spécialisée. Bénéficiaire d’une allocation pour impotent de l’AI, degré moyen. Mineur, canton de Vaud.',
-    contexteCourt: 'Dossier de Noah, 16 ans · 2 démarches en cours',
-    demarchesActives: ['Transition à la majorité', 'Renouvellement API'],
-  },
-  {
-    id: 'madeleine',
-    prenom: 'Madeleine',
-    nom: 'Perret',
-    age: 84,
-    naissance: '12 janvier 1942',
-    initiale: 'M',
-    contexte:
-      'Mère de Sandrine. Troubles cognitifs. Hospitalisée, sortie prévue dans trois semaines.',
-    contexteCourt: 'Dossier de Madeleine, 84 ans · 1 démarche en cours',
-    demarchesActives: ['Entrée en EMS'],
-  },
-]
-
-// Échéances par dossier, mêlant délais légaux et jalons conseillés.
-export const echeances: Record<string, Echeance[]> = {
-  noah: [
-    {
-      id: 'noah-e1',
-      nature: 'delai',
-      titre: 'Répondre à l’office AI',
-      provenance: 'Date lue sur votre courrier de l’Office AI Vaud du 13 août 2026',
-      date: 'avant le 12 septembre 2026',
-      dateISO: '2026-09-12',
-      joursRestants: 28,
-    },
-    {
-      id: 'noah-e2',
-      nature: 'delai',
-      titre: 'Renvoyer le questionnaire API',
-      provenance: 'Date lue sur votre courrier de l’Office AI Vaud du 13 août 2026',
-      date: 'avant le 3 octobre 2026',
-      dateISO: '2026-10-03',
-      joursRestants: 49,
-    },
-    {
-      id: 'noah-e3',
-      nature: 'jalon',
-      titre: 'Réévaluer les besoins d’accompagnement',
-      provenance: 'Comptez un point de situation annuel',
-      date: 'vers janvier 2027',
-      dateISO: '2027-01-15',
-    },
-    {
-      id: 'noah-e4',
-      nature: 'jalon',
-      titre: 'Déposer la demande à la justice de paix',
-      provenance: 'Règle : 6 mois avant les 18 ans. Comptez environ 6 mois de traitement',
-      date: 'vers septembre 2027',
-      dateISO: '2027-09-01',
-    },
-  ],
-  madeleine: [
-    {
-      id: 'mad-e1',
-      nature: 'delai',
-      titre: 'Confirmer la place à l’EMS Les Tilleuls',
-      provenance: 'Date lue sur votre courrier de l’EMS Les Tilleuls',
-      date: 'avant le 29 août 2026',
-      dateISO: '2026-08-29',
-      joursRestants: 14,
-    },
-    {
-      id: 'mad-e2',
-      nature: 'jalon',
-      titre: 'Déposer la demande de prestations complémentaires',
-      provenance: 'Règle : 3 mois avant l’entrée en établissement. À faire dès maintenant',
-      date: 'dès maintenant',
-      dateISO: '2026-08-16',
-    },
-  ],
+export type Titulaire = {
+  prenom: string
+  nom: string
+  ville: string
+  canton: string
 }
 
-// Chronologie signature : part d’aujourd’hui et descend dans le futur.
 export type PointChronologie = {
   id: string
   date: string
@@ -132,43 +70,20 @@ export type PointChronologie = {
   nature: Nature | 'repere'
 }
 
-export const chronologieNoah: PointChronologie[] = [
-  { id: 'c0', date: 'Aujourd’hui', dateCourte: '15 août 2026', evenement: 'Vous êtes ici', nature: 'repere' },
-  { id: 'c1', date: '29 août 2026', dateCourte: '29.08.2026', evenement: 'Délai — confirmer une place (dossier Madeleine)', nature: 'delai' },
-  { id: 'c2', date: '12 sept. 2026', dateCourte: '12.09.2026', evenement: 'Délai — répondre à l’office AI', nature: 'delai' },
-  { id: 'c3', date: '3 oct. 2026', dateCourte: '03.10.2026', evenement: 'Délai — renvoyer le questionnaire API', nature: 'delai' },
-  { id: 'c4', date: 'janvier 2027', dateCourte: '01.2027', evenement: 'Moment conseillé — réévaluer les besoins', nature: 'jalon' },
-  { id: 'c5', date: 'septembre 2027', dateCourte: '09.2027', evenement: 'Moment conseillé — demande à la justice de paix', nature: 'jalon' },
-  { id: 'c6', date: 'mars 2028', dateCourte: '04.03.2028', evenement: 'Noah a 18 ans', nature: 'repere' },
-  { id: 'c7', date: 'courant 2028', dateCourte: '2028', evenement: 'Moment conseillé — réexaminer les prestations à la majorité', nature: 'jalon' },
-]
-
 export type Document = {
   id: string
   titre: string
   emetteur: string
+  // Date telle qu'elle figure sur le document (texte libre : « 04.2026 », « 2024 »)
   date: string
   type: string
   annee: string
   etiquettes: string[]
   demarche?: string
   classe: boolean
+  ajouteLe?: string // ISO date-heure
+  ajoutePar?: string
 }
-
-export const documentsNoah: Document[] = [
-  { id: 'd1', titre: 'Décision AI', emetteur: 'Office AI Vaud', date: '13.08.2026', type: 'Décision', annee: '2026', etiquettes: ['AI', 'Décision'], demarche: 'Renouvellement API', classe: true },
-  { id: 'd2', titre: 'Questionnaire API (vierge)', emetteur: 'Office AI Vaud', date: '13.08.2026', type: 'Formulaire', annee: '2026', etiquettes: ['AI', 'À remplir'], demarche: 'Renouvellement API', classe: true },
-  { id: 'd3', titre: 'Rapport pédopsychiatrique', emetteur: 'Dr Ancel, CHUV', date: '04.2026', type: 'Rapport', annee: '2026', etiquettes: ['Médical'], classe: true },
-  { id: 'd4', titre: 'Attestation de scolarité 2026-2027', emetteur: 'École La Combe', date: '2026', type: 'Attestation', annee: '2026', etiquettes: ['École'], classe: true },
-  { id: 'd5', titre: 'Décision API 2024', emetteur: 'Office AI Vaud', date: '2024', type: 'Décision', annee: '2024', etiquettes: ['AI', 'Décision'], classe: true },
-  { id: 'd6', titre: 'Courrier SESAF', emetteur: 'SESAF', date: '02.2026', type: 'Courrier', annee: '2026', etiquettes: ['École'], classe: true },
-  { id: 'd7', titre: 'Facture logopédie', emetteur: 'Cabinet de logopédie', date: '07.2026', type: 'Facture', annee: '2026', etiquettes: ['Médical', 'Facture'], classe: true },
-  { id: 'd8', titre: 'Décharge de transport', emetteur: 'Transports scolaires', date: '2026', type: 'Formulaire', annee: '2026', etiquettes: ['École'], classe: true },
-  { id: 'd9', titre: 'Certificat médical', emetteur: 'Dr Ancel, CHUV', date: '01.2026', type: 'Certificat', annee: '2026', etiquettes: ['Médical'], classe: true },
-  { id: 'd10', titre: 'Photo carte AVS', emetteur: 'Caisse AVS', date: '—', type: 'Pièce d’identité', annee: '—', etiquettes: ['Références'], classe: true },
-  { id: 'd11', titre: 'Bilan éducatif', emetteur: 'École La Combe', date: '06.2026', type: 'Rapport', annee: '2026', etiquettes: ['École'], classe: true },
-  { id: 'd12', titre: 'Convocation office AI', emetteur: 'Office AI Vaud', date: '08.2026', type: 'Courrier', annee: '2026', etiquettes: [], classe: false },
-]
 
 export type Intervenant = {
   id: string
@@ -181,6 +96,230 @@ export type Intervenant = {
   dernierContact?: string
 }
 
+export type Reference = { id: string; label: string; valeur: string }
+
+export type QuestionRdv = { id: string; texte: string; ajouteeLe: string; faite: boolean }
+export type PieceRdv = { id: string; texte: string; lie: boolean }
+
+export type RendezVous = {
+  id: string
+  intervenant: string
+  fonction: string
+  dateISO: string
+  heure?: string
+  lieu: string
+  questions: QuestionRdv[]
+  pieces: PieceRdv[]
+  // « Avant » : ce qui a changé depuis la dernière fois
+  changements: string
+  // « Pendant »
+  notes: { dit: string; decide: string; prescrit: string; prochaine: string }
+  // « Après »
+  decisions: string[]
+}
+
+export type SectionPortrait = {
+  id: string
+  intitule: string
+  texte: string | null
+}
+
+// Les sept sections fixes du portrait (CLAUDE.md §2.3), dans cet ordre.
+export const INTITULES_PORTRAIT = [
+  'Comment je communique',
+  'Ce qui me rassure',
+  'Ce qui me met en difficulté',
+  'Le déroulé de ma journée',
+  'Ce que j’aime',
+  'Les gens qui comptent pour moi',
+  'Mon histoire',
+] as const
+
+export function portraitVide(): SectionPortrait[] {
+  return INTITULES_PORTRAIT.map((intitule, i) => ({ id: `pt${i + 1}`, intitule, texte: null }))
+}
+
+export type Acces = {
+  id: string
+  nom: string
+  role: string
+  peutVoir: string
+  depuis: string
+  jusqua: string
+}
+
+export type Demarche = {
+  id: string
+  // Fiche éditoriale associée (`lib/fiches.ts`), le cas échéant
+  ficheId?: string
+  titre: string
+  canton: string
+  situation: string
+  prochaineAction?: string
+  prochaineDate?: string
+  // Pièces de la fiche cochées par la famille
+  piecesCochees: string[]
+}
+
+export type Activite = { id: string; texte: string; auteur: string; quand: string }
+
+export type StatutEtape = 'a-faire' | 'fait' | 'pas-concerne'
+export type SuiviEtape = { statut: StatutEtape; note?: string; faitLe?: string }
+export type ParcoursSuivi = {
+  active: boolean
+  activeLe?: string
+  etapes: Record<string, SuiviEtape>
+}
+
+export type DossierData = {
+  echeances: Echeance[]
+  documents: Document[]
+  intervenants: Intervenant[]
+  references: Reference[]
+  rendezVous: RendezVous[]
+  portrait: SectionPortrait[]
+  acces: Acces[]
+  demarches: Demarche[]
+  parcours: Record<string, ParcoursSuivi>
+  journal: Activite[]
+}
+
+export type Etat = {
+  version: 1
+  titulaire: Titulaire
+  personneActiveId: string
+  personnes: PersonneBase[]
+  dossiers: Record<string, DossierData>
+}
+
+export function dossierVide(titulaire: Titulaire): DossierData {
+  return {
+    echeances: [],
+    documents: [],
+    intervenants: [],
+    references: [],
+    rendezVous: [],
+    portrait: portraitVide(),
+    acces: [
+      {
+        id: 'acces-titulaire',
+        nom: `${titulaire.prenom} ${titulaire.nom}`,
+        role: 'Titulaire',
+        peutVoir: 'L’ensemble du dossier, y compris le volet financier',
+        depuis: formatDateLongue(aujourdhuiISO()),
+        jusqua: 'sans limite',
+      },
+    ],
+    demarches: [],
+    parcours: {},
+    journal: [],
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Données de démonstration
+// ---------------------------------------------------------------------------
+
+export const titulaire: Titulaire = {
+  prenom: 'Sandrine',
+  nom: 'Perret',
+  ville: 'Yverdon-les-Bains',
+  canton: 'VD',
+}
+
+export const personnes: PersonneBase[] = [
+  {
+    id: 'noah',
+    prenom: 'Noah',
+    nom: 'Perret',
+    naissanceISO: '2010-03-04',
+    contexte:
+      'Trouble du spectre de l’autisme. Scolarisé en école spécialisée. Bénéficiaire d’une allocation pour impotent de l’AI, degré moyen. Mineur, canton de Vaud.',
+  },
+  {
+    id: 'madeleine',
+    prenom: 'Madeleine',
+    nom: 'Perret',
+    naissanceISO: '1942-01-12',
+    contexte: 'Mère de Sandrine. Troubles cognitifs. Hospitalisée, sortie prévue dans trois semaines.',
+  },
+]
+
+// Les dates de la démonstration sont posées par rapport à aujourd'hui, pour que les
+// comptes à rebours restent parlants quelle que soit la date d'ouverture.
+const auj = aujourdhuiISO()
+const dansJours = (n: number) => decalerJours(auj, n)
+const ilYaJours = (n: number) => decalerJours(auj, -n)
+const dateHeure = (joursAvant: number, heure = '18:12') => `${ilYaJours(joursAvant)}T${heure}:00`
+
+export const echeancesNoah: Echeance[] = [
+  {
+    id: 'noah-e1',
+    nature: 'delai',
+    titre: 'Répondre à l’office AI',
+    provenance: `Date lue sur votre courrier de l’Office AI Vaud du ${formatDateLongue(ilYaJours(2))}`,
+    dateISO: dansJours(28),
+    demarcheId: 'api',
+    documentId: 'd1',
+    origine: 'document',
+  },
+  {
+    id: 'noah-e2',
+    nature: 'delai',
+    titre: 'Renvoyer le questionnaire API',
+    provenance: `Date lue sur votre courrier de l’Office AI Vaud du ${formatDateLongue(ilYaJours(2))}`,
+    dateISO: dansJours(49),
+    demarcheId: 'api',
+    documentId: 'd2',
+    origine: 'document',
+  },
+  {
+    id: 'noah-e3',
+    nature: 'jalon',
+    titre: 'Réévaluer les besoins d’accompagnement',
+    provenance: 'Comptez un point de situation annuel',
+    dateISO: '2027-01-15',
+    origine: 'manuel',
+  },
+]
+
+export const echeancesMadeleine: Echeance[] = [
+  {
+    id: 'mad-e1',
+    nature: 'delai',
+    titre: 'Confirmer la place à l’EMS Les Tilleuls',
+    provenance: 'Date lue sur votre courrier de l’EMS Les Tilleuls',
+    dateISO: dansJours(14),
+    demarcheId: 'ems',
+    origine: 'document',
+  },
+  {
+    id: 'mad-e2',
+    nature: 'jalon',
+    titre: 'Déposer la demande de prestations complémentaires',
+    provenance: 'Règle : 3 mois avant l’entrée en établissement. À faire dès maintenant',
+    dateISO: auj,
+    date: 'dès maintenant',
+    demarcheId: 'ems',
+    origine: 'manuel',
+  },
+]
+
+export const documentsNoah: Document[] = [
+  { id: 'd1', titre: 'Décision AI', emetteur: 'Office AI Vaud', date: formatDateLongue(ilYaJours(2)), type: 'Décision', annee: '2026', etiquettes: ['AI', 'Décision'], demarche: 'Renouvellement API', classe: true, ajouteLe: dateHeure(1), ajoutePar: 'Sandrine Perret' },
+  { id: 'd2', titre: 'Questionnaire API (vierge)', emetteur: 'Office AI Vaud', date: formatDateLongue(ilYaJours(2)), type: 'Formulaire', annee: '2026', etiquettes: ['AI', 'À remplir'], demarche: 'Renouvellement API', classe: true, ajouteLe: dateHeure(1), ajoutePar: 'Sandrine Perret' },
+  { id: 'd3', titre: 'Rapport pédopsychiatrique', emetteur: 'Dr Ancel, CHUV', date: '04.2026', type: 'Rapport', annee: '2026', etiquettes: ['Médical'], classe: true, ajouteLe: dateHeure(120), ajoutePar: 'Sandrine Perret' },
+  { id: 'd4', titre: 'Attestation de scolarité 2026-2027', emetteur: 'École La Combe', date: '2026', type: 'Attestation', annee: '2026', etiquettes: ['École'], classe: true, ajouteLe: dateHeure(20), ajoutePar: 'Sandrine Perret' },
+  { id: 'd5', titre: 'Décision API 2024', emetteur: 'Office AI Vaud', date: '2024', type: 'Décision', annee: '2024', etiquettes: ['AI', 'Décision'], classe: true, ajouteLe: dateHeure(700), ajoutePar: 'Sandrine Perret' },
+  { id: 'd6', titre: 'Courrier SESAF', emetteur: 'SESAF', date: '02.2026', type: 'Courrier', annee: '2026', etiquettes: ['École'], classe: true, ajouteLe: dateHeure(200), ajoutePar: 'Sandrine Perret' },
+  { id: 'd7', titre: 'Facture logopédie', emetteur: 'Cabinet de logopédie', date: '07.2026', type: 'Facture', annee: '2026', etiquettes: ['Médical', 'Facture'], classe: true, ajouteLe: dateHeure(50), ajoutePar: 'Julien Perret' },
+  { id: 'd8', titre: 'Décharge de transport', emetteur: 'Transports scolaires', date: '2026', type: 'Formulaire', annee: '2026', etiquettes: ['École'], classe: true, ajouteLe: dateHeure(30), ajoutePar: 'Sandrine Perret' },
+  { id: 'd9', titre: 'Certificat médical', emetteur: 'Dr Ancel, CHUV', date: '01.2026', type: 'Certificat', annee: '2026', etiquettes: ['Médical'], classe: true, ajouteLe: dateHeure(230), ajoutePar: 'Sandrine Perret' },
+  { id: 'd10', titre: 'Photo carte AVS', emetteur: 'Caisse AVS', date: '—', type: 'Pièce d’identité', annee: '—', etiquettes: ['Références'], classe: true, ajouteLe: dateHeure(400), ajoutePar: 'Sandrine Perret' },
+  { id: 'd11', titre: 'Bilan éducatif', emetteur: 'École La Combe', date: '06.2026', type: 'Rapport', annee: '2026', etiquettes: ['École'], classe: true, ajouteLe: dateHeure(80), ajoutePar: 'Sandrine Perret' },
+  { id: 'd12', titre: 'Convocation office AI', emetteur: 'Office AI Vaud', date: '08.2026', type: 'Courrier', annee: '2026', etiquettes: [], classe: false, ajouteLe: dateHeure(3), ajoutePar: 'Sandrine Perret' },
+]
+
 export const intervenantsNoah: Intervenant[] = [
   {
     id: 'i1',
@@ -190,7 +329,7 @@ export const intervenantsNoah: Intervenant[] = [
     telephone: '021 964 12 45',
     courriel: 'corina.blanc@aivd.ch',
     reference: 'Dossier n° 402.55.881',
-    dernierContact: '13.08.2026',
+    dernierContact: formatDateLongue(ilYaJours(2)),
   },
   {
     id: 'i2',
@@ -199,7 +338,7 @@ export const intervenantsNoah: Intervenant[] = [
     fonction: 'Enseignante référente',
     telephone: '024 420 55 10',
     courriel: 'm.reber@lacombe.ch',
-    dernierContact: '12.06.2026',
+    dernierContact: '12 juin 2026',
   },
   {
     id: 'i3',
@@ -208,7 +347,7 @@ export const intervenantsNoah: Intervenant[] = [
     fonction: 'Pédopsychiatre',
     telephone: '021 314 11 11',
     courriel: 'secretariat.ancel@chuv.ch',
-    dernierContact: '04.2026',
+    dernierContact: 'avril 2026',
   },
   {
     id: 'i4',
@@ -228,65 +367,56 @@ export const intervenantsNoah: Intervenant[] = [
   },
 ]
 
-export const references = [
+export const referencesNoah: Reference[] = [
   { id: 'r1', label: 'N° AVS', valeur: '756.xxxx.xxxx.xx' },
   { id: 'r2', label: 'Dossier AI', valeur: '402.55.881' },
   { id: 'r3', label: 'N° assuré Assura', valeur: '88.442.109' },
 ]
-
-export type RendezVous = {
-  id: string
-  intervenant: string
-  fonction: string
-  date: string
-  heure?: string
-  lieu: string
-  statut: 'a-venir' | 'passe'
-  questionsEnAttente?: number
-  piecesAEmporter?: number
-}
 
 export const rendezVousNoah: RendezVous[] = [
   {
     id: 'rv1',
     intervenant: 'Dr Ancel',
     fonction: 'Pédopsychiatre',
-    date: '22 septembre 2026',
+    dateISO: dansJours(9),
     heure: '14h30',
     lieu: 'CHUV, Lausanne',
-    statut: 'a-venir',
-    questionsEnAttente: 4,
-    piecesAEmporter: 2,
+    questions: [
+      { id: 'q1', texte: 'Faut-il adapter le traitement avant la rentrée ?', ajouteeLe: ilYaJours(12), faite: false },
+      { id: 'q2', texte: 'Un bilan est-il utile pour le dossier AI ?', ajouteeLe: ilYaJours(10), faite: false },
+      { id: 'q3', texte: 'Comment gérer les périodes de transition ?', ajouteeLe: ilYaJours(6), faite: false },
+      { id: 'q4', texte: 'Peut-on avoir un certificat pour les transports ?', ajouteeLe: ilYaJours(4), faite: false },
+    ],
+    pieces: [
+      { id: 'p1', texte: `Décision AI du ${formatDateLongue(ilYaJours(2))}`, lie: true },
+      { id: 'p2', texte: 'Rapport pédopsychiatrique 04.2026', lie: true },
+      { id: 'p3', texte: 'Carte d’assurance', lie: false },
+    ],
+    changements: '',
+    notes: { dit: '', decide: '', prescrit: '', prochaine: '' },
+    decisions: [],
   },
   {
     id: 'rv2',
     intervenant: 'Réseau école',
     fonction: 'Point de situation',
-    date: '12 juin 2026',
+    dateISO: '2026-06-12',
     lieu: 'École La Combe',
-    statut: 'passe',
+    questions: [],
+    pieces: [],
+    changements: '',
+    notes: {
+      dit: 'Noah progresse dans les échanges avec ses camarades ; les transitions restent difficiles.',
+      decide: 'Poursuivre le suivi actuel, prochain point dans six mois.',
+      prescrit: '',
+      prochaine: 'Rédiger un certificat pour les transports scolaires.',
+    },
+    decisions: [
+      'Poursuivre le suivi actuel, prochain point dans six mois.',
+      'Rédiger un certificat pour les transports scolaires.',
+    ],
   },
 ]
-
-export const questionsRdv = [
-  { id: 'q1', texte: 'Faut-il adapter le traitement avant la rentrée ?', ajoutee: 'ajoutée le 3 août', faite: false },
-  { id: 'q2', texte: 'Un bilan est-il utile pour le dossier AI ?', ajoutee: 'ajoutée le 5 août', faite: false },
-  { id: 'q3', texte: 'Comment gérer les périodes de transition ?', ajoutee: 'ajoutée le 9 août', faite: false },
-  { id: 'q4', texte: 'Peut-on avoir un certificat pour les transports ?', ajoutee: 'ajoutée le 11 août', faite: false },
-]
-
-export const piecesAEmporter = [
-  { id: 'p1', texte: 'Décision AI du 13.08.2026', lie: true },
-  { id: 'p2', texte: 'Rapport pédopsychiatrique 04.2026', lie: true },
-  { id: 'p3', texte: 'Carte d’assurance', lie: false },
-]
-
-// Portrait : sept sections à la première personne.
-export type SectionPortrait = {
-  id: string
-  intitule: string
-  texte: string | null
-}
 
 export const portraitNoah: SectionPortrait[] = [
   {
@@ -325,22 +455,8 @@ export const portraitNoah: SectionPortrait[] = [
     texte:
       'Ma mère Sandrine, mon père Julien, et Mme Reber à l’école. Ils savent comment me parler quand je suis contrarié.',
   },
-  {
-    id: 'pt7',
-    intitule: 'Mon histoire',
-    texte: null,
-  },
+  { id: 'pt7', intitule: 'Mon histoire', texte: null },
 ]
-
-export type Acces = {
-  id: string
-  nom: string
-  role: string
-  peutVoir: string
-  depuis: string
-  jusqua: string
-  dossier: string
-}
 
 export const accesNoah: Acces[] = [
   {
@@ -350,7 +466,6 @@ export const accesNoah: Acces[] = [
     peutVoir: 'L’ensemble du dossier, y compris le volet financier',
     depuis: 'mars 2024',
     jusqua: 'sans limite',
-    dossier: 'noah',
   },
   {
     id: 'a2',
@@ -359,7 +474,6 @@ export const accesNoah: Acces[] = [
     peutVoir: 'Tout le dossier, sauf le volet financier',
     depuis: 'mars 2024',
     jusqua: 'sans limite',
-    dossier: 'noah',
   },
   {
     id: 'a3',
@@ -368,51 +482,26 @@ export const accesNoah: Acces[] = [
     peutVoir: 'Le portrait seulement',
     depuis: 'septembre 2025',
     jusqua: '30 juin 2027',
-    dossier: 'noah',
   },
 ]
 
-export const derniereActivite = [
-  { id: 'act1', texte: 'Décision AI ajoutée au coffre', auteur: 'Sandrine Perret', date: 'hier, 18h12' },
-  { id: 'act2', texte: 'Question notée pour le rendez-vous du 22 septembre', auteur: 'Sandrine Perret', date: 'il y a 3 jours' },
-  { id: 'act3', texte: 'Accès du portrait accordé à Mme Reber', auteur: 'Sandrine Perret', date: 'il y a 1 semaine' },
-]
-
-// Démarches
-export type Demarche = {
-  id: string
-  titre: string
-  canton: string
-  situation: string
-  etapesFaites: number
-  etapesTotal: number
-  prochaineAction: string
-  prochaineDate: string
-  dossier: string
-}
-
-export const demarches: Demarche[] = [
+export const demarchesNoah: Demarche[] = [
   {
     id: 'transition',
+    ficheId: 'transition',
     titre: 'Transition à la majorité',
     canton: 'VD',
     situation: 'Noah aura 18 ans le 4 mars 2028. Plusieurs sujets se préparent en amont.',
-    etapesFaites: 3,
-    etapesTotal: 7,
-    prochaineAction: 'Déposer la demande à la justice de paix',
-    prochaineDate: 'vers septembre 2027',
-    dossier: 'noah',
+    piecesCochees: ['f1', 'f3', 'f4'],
   },
   {
     id: 'api',
+    ficheId: 'api',
     titre: 'Renouvellement API',
     canton: 'VD',
     situation: 'L’allocation pour impotent doit être réexaminée par l’office AI.',
-    etapesFaites: 1,
-    etapesTotal: 4,
     prochaineAction: 'Renvoyer le questionnaire API',
-    prochaineDate: 'avant le 3 octobre 2026',
-    dossier: 'noah',
+    piecesCochees: ['a1'],
   },
 ]
 
@@ -420,3 +509,87 @@ export const demarchesSuggerees = [
   'Prestations complémentaires pour familles',
   'Aide au placement en atelier protégé',
 ]
+
+export function creerEtatInitial(): Etat {
+  const noah: DossierData = {
+    echeances: echeancesNoah,
+    documents: documentsNoah,
+    intervenants: intervenantsNoah,
+    references: referencesNoah,
+    rendezVous: rendezVousNoah,
+    portrait: portraitNoah,
+    acces: accesNoah,
+    demarches: demarchesNoah,
+    parcours: {
+      'transition-majorite': {
+        active: true,
+        activeLe: ilYaJours(90),
+        etapes: {
+          'allocations-familiales': { statut: 'fait', faitLe: ilYaJours(80) },
+          'dcish-inscription': { statut: 'fait', faitLe: ilYaJours(45) },
+          'portrait-a-jour': { statut: 'fait', faitLe: ilYaJours(40) },
+        },
+      },
+    },
+    journal: [
+      { id: 'act1', texte: 'Décision AI ajoutée au coffre', auteur: 'Sandrine Perret', quand: dateHeure(1) },
+      { id: 'act2', texte: `Question notée pour le rendez-vous du ${formatDateLongue(dansJours(9))}`, auteur: 'Sandrine Perret', quand: dateHeure(3, '09:40') },
+      { id: 'act3', texte: 'Accès du portrait accordé à Mme Reber', auteur: 'Sandrine Perret', quand: dateHeure(7, '20:05') },
+    ],
+  }
+
+  const madeleine: DossierData = {
+    ...dossierVide(titulaire),
+    echeances: echeancesMadeleine,
+    intervenants: [
+      {
+        id: 'mi1',
+        organisation: 'EMS Les Tilleuls',
+        contact: 'Secrétariat',
+        fonction: 'Admissions',
+        telephone: '024 000 00 00',
+        courriel: 'admissions@tilleuls.example',
+      },
+      {
+        id: 'mi2',
+        organisation: 'Centre médico-social (CMS)',
+        contact: 'Infirmière référente',
+        fonction: 'Coordination des soins à domicile',
+        telephone: '024 000 00 01',
+        courriel: 'cms@example.ch',
+      },
+    ],
+    acces: [
+      {
+        id: 'ma1',
+        nom: 'Sandrine Perret',
+        role: 'Titulaire',
+        peutVoir: 'L’ensemble du dossier, y compris le volet financier',
+        depuis: 'juillet 2026',
+        jusqua: 'sans limite',
+      },
+    ],
+    demarches: [
+      {
+        id: 'ems',
+        ficheId: 'ems',
+        titre: 'Entrée en EMS',
+        canton: 'VD',
+        situation: 'Une place est proposée aux Tilleuls. Le financement et les prestations complémentaires sont à préparer.',
+        prochaineAction: 'Confirmer la place',
+        piecesCochees: [],
+      },
+    ],
+    journal: [
+      { id: 'mact1', texte: 'Dossier de Madeleine créé', auteur: 'Sandrine Perret', quand: dateHeure(40, '11:20') },
+    ],
+  }
+
+  return {
+    version: 1,
+    titulaire,
+    personneActiveId: 'noah',
+    personnes,
+    dossiers: { noah, madeleine },
+  }
+}
