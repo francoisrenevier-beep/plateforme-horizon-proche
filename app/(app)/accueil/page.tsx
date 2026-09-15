@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Camera, CalendarPlus, Plus, Route, ChevronRight } from 'lucide-react'
+import { Camera, Plus, Route, ChevronRight } from 'lucide-react'
 import { useDossier, useEcheances, useChronologie, contexteCourt, dateMajorite } from '@/lib/store'
 import { aujourdhuiISO, formatDateLongue, formatRelatif } from '@/lib/dates'
 import { parcours as catalogueParcours } from '@/lib/parcours'
@@ -10,6 +10,8 @@ import { Card, CardTitle } from '@/components/ui/card'
 import { EcheanceItem } from '@/components/echeance-item'
 import { Chronologie } from '@/components/chronologie'
 import { CaptureFlow } from '@/components/capture-flow'
+import { BoutonAgenda } from '@/components/bouton-agenda'
+import { evenementDeLEcheance } from '@/lib/export-agenda'
 import { FormulaireEcheance } from '@/components/formulaire-echeance'
 
 export default function AccueilPage() {
@@ -62,10 +64,13 @@ export default function AccueilPage() {
             Toutes les échéances
             <ChevronRight className="size-4" aria-hidden />
           </Link>
-          <button type="button" className="inline-flex items-center gap-2 text-[15px] text-encre-2 hover:text-teal-900" title="Bientôt disponible">
-            <CalendarPlus className="size-4" aria-hidden />
-            Ajouter au calendrier (.ics)
-          </button>
+          <BoutonAgenda
+            variante="lien"
+            evenements={aFaire.map((e) => evenementDeLEcheance(e, personne, personne.id))}
+            nomCalendrier={`Échéances de ${personne.prenom} — Horizon Proche`}
+            nomFichier={`echeances-${personne.prenom}`}
+            libelle="Ajouter à mon agenda"
+          />
         </div>
       </Card>
 

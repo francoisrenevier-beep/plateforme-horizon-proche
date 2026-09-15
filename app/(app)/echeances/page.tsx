@@ -8,6 +8,8 @@ import type { Echeance } from '@/lib/demo-data'
 import { EcheanceItem } from '@/components/echeance-item'
 import { FormulaireEcheance } from '@/components/formulaire-echeance'
 import { BoutonPrincipal, BoutonSuppression } from '@/components/ui/formulaire'
+import { BoutonAgenda, MentionAgenda } from '@/components/bouton-agenda'
+import { evenementDeLEcheance } from '@/lib/export-agenda'
 import { cn } from '@/lib/utils'
 
 type Filtre = 'toutes' | 'delai' | 'jalon'
@@ -38,10 +40,18 @@ export default function EcheancesPage() {
             Tout ce qui attend une réponse ou un geste pour {personne.prenom}, délais légaux et moments conseillés.
           </p>
         </div>
-        <BoutonPrincipal onClick={() => setAjout(true)}>
-          <Plus className="size-4" aria-hidden />
-          Ajouter une échéance
-        </BoutonPrincipal>
+        <div className="flex flex-wrap gap-2">
+          <BoutonPrincipal onClick={() => setAjout(true)}>
+            <Plus className="size-4" aria-hidden />
+            Ajouter une échéance
+          </BoutonPrincipal>
+          <BoutonAgenda
+            evenements={aVenir.map((e) => evenementDeLEcheance(e, personne, personne.id))}
+            nomCalendrier={`Échéances de ${personne.prenom} — Horizon Proche`}
+            nomFichier={`echeances-${personne.prenom}`}
+            libelle="Ajouter à mon agenda"
+          />
+        </div>
       </header>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer par nature">
@@ -112,10 +122,17 @@ export default function EcheancesPage() {
         </section>
       )}
 
-      <p className="border-t border-sable-2 pt-4 text-[15px] leading-relaxed text-encre-2">
-        Un délai légal vient toujours d’un courrier que vous avez reçu. Un moment conseillé vient d’une règle de calendrier
-        ou d’un parcours suivi : il vous aide à vous organiser, il ne vous oblige à rien.
-      </p>
+      <div className="flex flex-col gap-2 border-t border-sable-2 pt-4">
+        <p className="text-[15px] leading-relaxed text-encre-2">
+          Un délai légal vient toujours d’un courrier que vous avez reçu. Un moment conseillé vient d’une règle de
+          calendrier ou d’un parcours suivi : il vous aide à vous organiser, il ne vous oblige à rien.
+        </p>
+        <MentionAgenda className="max-w-2xl" />
+        <p className="etiquette max-w-2xl">
+          Dans votre agenda, chaque événement garde sa nature dans son titre. Seul un délai légal pose un rappel, une
+          semaine avant. Un moment conseillé n’en pose jamais.
+        </p>
+      </div>
 
       {ajout && <FormulaireEcheance onClose={() => setAjout(false)} />}
       {enEdition && <FormulaireEcheance echeance={enEdition} onClose={() => setEnEdition(null)} />}

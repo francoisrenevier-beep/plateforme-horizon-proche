@@ -65,7 +65,10 @@ couleurs (forme de l'icône + bordure + libellé textuel, pas la couleur seule).
 
 Tout composant qui affiche une échéance (accueil, page démarche, chronologie,
 future page de présentation publique) doit respecter ce traitement — jamais
-une variante simplifiée qui perdrait la distinction.
+une variante simplifiée qui perdrait la distinction. Un **export** est aussi
+une forme d'affichage : dans un fichier d'agenda (§6.4), la nature est portée
+par le titre de l'événement (« Délai légal — … » / « Moment conseillé — … »)
+et seul un délai légal pose un rappel.
 
 ### 2.3 Le portrait est écrit à la première personne
 
@@ -267,13 +270,19 @@ Règles propres aux parcours :
   un délai légal. Les délais ne viennent que des courriers reçus (§2.2).
 - Une étape `questionOuverte` (protection de l'adulte) se suit avec « nous en
   avons parlé », pas « fait » (§2.6).
-- Chaque étape cite ses sources (`sources[]`, `statut: 'verifiee' |
-  'a-verifier'`). Le parcours « Transition à la majorité » s'appuie sur le
-  *Memento handicap* de la DGCS (canton de Vaud, **document de travail**
-  remis en septembre 2026) et sur le droit fédéral (CC, LAI, LAFam, LAMal) ;
-  tout est marqué `a-verifier` tant qu'une relecture juridique n'a pas été
-  faite. Les projets pilotes que le memento demande de ne pas mentionner
-  (« Mon Plan », « Ma vie mon appart ») sont **exclus**.
+- Les sources de chaque étape (`sources[]`, `statut: 'verifiee' |
+  'a-verifier'`) **ne sont pas affichées à l'écran** : décision du
+  15 septembre 2026, la citation par étape alourdissait la lecture pour une
+  famille. Le champ reste renseigné et obligatoire — il sert à la relecture
+  juridique et au suivi éditorial. Vis-à-vis du lecteur, §2.5 est tenu par les
+  marqueurs `[À COMPLÉTER]` / `[À VÉRIFIER]` dans le texte lui-même et par
+  l'avertissement en tête de parcours.
+- Le parcours « Transition à la majorité » s'appuie sur le *Memento handicap*
+  de la DGCS (canton de Vaud, **document de travail** remis en septembre 2026)
+  et sur le droit fédéral (CC, LAI, LAFam, LAMal) ; tout est `a-verifier` tant
+  qu'une relecture juridique n'a pas été faite. Les projets pilotes que le
+  memento demande de ne pas mentionner (« Mon Plan », « Ma vie mon appart »)
+  sont **exclus**.
 - Le suivi par la famille (statut par étape : à faire / fait / pas concerné,
   note libre) vit dans `DossierData.parcours[parcoursId]`.
 - L'avancement de la démarche liée (`fiche.parcoursId`) se calcule sur les
@@ -289,6 +298,33 @@ en-tête de chaque fiche (`components/statut-fiche.tsx`). Les fiches héritées
 de la maquette v0 sont `a-verifier` ; « Entrée en EMS » est un `brouillon`
 rempli de `[À COMPLÉTER]`. Une fiche ne passe à `verifiee` qu'après relecture
 datée contre sa source.
+
+### 6.4 Export vers un agenda (.ics)
+
+`lib/ics.ts` produit un fichier iCalendar (RFC 5545) ; `lib/export-agenda.ts`
+traduit un rendez-vous ou une échéance en événement ; `components/bouton-agenda.tsx`
+déclenche le téléchargement. Points fixés :
+
+- **Un seul format, le .ics.** Il s'importe dans Outlook, Google Calendar,
+  Apple Calendrier et la plupart des agendas. Pas d'intégration par interface
+  de programmation avec un fournisseur : aucune donnée du dossier ne part vers
+  un service externe, le fichier est produit dans le navigateur et c'est la
+  famille qui l'ouvre où elle veut.
+- Fuseau **Europe/Zurich**, écrit en UTC avec le décalage calculé pour la date
+  concernée (l'heure d'été est donc correcte sans table codée en dur).
+- Une échéance est une **journée entière** ; un rendez-vous est daté à l'heure
+  saisie (durée d'une heure par défaut, la famille ne saisit pas de durée).
+  L'heure est du texte libre (« 14h30 », « 14:30 », « 9 h ») : sans heure
+  reconnue, l'événement devient une journée entière.
+- Rappels : la veille pour un rendez-vous, une semaine avant pour un délai
+  légal, **jamais** pour un moment conseillé (§2.2).
+- L'événement d'un rendez-vous emporte les questions en attente et les pièces
+  à emporter dans sa description : c'est ce qui rend l'export utile sur place.
+- `uid` stable (`<dossier>-<élément>@horizon-proche.ch`) : réimporter le même
+  fichier met l'événement à jour au lieu de créer un doublon.
+
+Emplacements des boutons : accueil, `/echeances`, `/rendez-vous` (les
+rendez-vous à venir) et le détail d'un rendez-vous.
 
 ---
 

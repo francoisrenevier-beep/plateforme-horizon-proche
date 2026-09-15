@@ -1,6 +1,11 @@
 // Parcours : les grandes étapes d'une période de vie, présentées dans l'ordre,
 // avec pour chacune le moment conseillé, le pourquoi, ce qu'il y a à faire et vers qui se tourner.
 //
+// `sources` n'est PAS affiché à l'écran (décision du 15 septembre 2026 : la citation de source
+// par étape alourdissait la lecture pour une famille). Le champ reste renseigné : il sert à la
+// relecture juridique et au suivi éditorial. La protection du lecteur passe par les marqueurs
+// [À COMPLÉTER] / [À VÉRIFIER] dans le texte lui-même et par l'avertissement en tête de parcours.
+//
 // Règles (CLAUDE.md §2.2, §2.5, §2.6) :
 //  - Un moment conseillé n'est JAMAIS un délai légal. Les étapes génèrent des jalons, pas des délais.
 //    Les délais légaux ne viennent que des courriers reçus par la famille.
@@ -98,7 +103,7 @@ export const parcours: Record<string, Parcours> = {
       'À 18 ans, votre enfant devient juridiquement adulte. Rien ne se fait automatiquement : les prestations de l’enfance s’arrêtent ou se transforment, d’autres s’ouvrent, et la question de qui l’aide à décider doit être posée. Ce parcours met les étapes dans l’ordre, à partir de sa date de naissance.',
     repere: 'majorite',
     avertissement:
-      'Ce parcours propose des moments, pas des obligations. Les seules dates opposables sont celles écrites sur les courriers que vous recevez : notez-les comme délais légaux. Le contenu s’appuie sur un document de travail de la DGCS (canton de Vaud) et sur le droit fédéral ; chaque étape indique sa source et si elle a été vérifiée.',
+      'Ce parcours propose des moments, pas des obligations. Les seules dates opposables sont celles écrites sur les courriers que vous recevez : notez-les comme délais légaux. Les informations cantonales et légales restent à confirmer auprès de l’autorité concernée ; ce qui n’est pas confirmé est signalé dans le texte.',
     phases: [
       {
         id: 'des-16-ans',

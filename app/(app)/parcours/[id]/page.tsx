@@ -10,14 +10,13 @@ import {
   ChevronDown,
   ExternalLink,
   FileText,
-  ShieldCheck,
   AlertCircle,
   HelpCircle,
   Route,
   Pencil,
 } from 'lucide-react'
 import { useDossier, dateMajorite } from '@/lib/store'
-import { parcours as catalogue, type EtapeParcours, type Source } from '@/lib/parcours'
+import { parcours as catalogue, type EtapeParcours } from '@/lib/parcours'
 import type { StatutEtape, SuiviEtape } from '@/lib/demo-data'
 import { ajouterMois, aujourdhuiISO, formatDateLongue, formatMoisAnnee } from '@/lib/dates'
 import { ZoneTexte, BoutonPrincipal, BoutonSecondaire } from '@/components/ui/formulaire'
@@ -314,8 +313,6 @@ function CarteEtape({
             )}
           </div>
 
-          <Sources sources={etape.sources} />
-
           {/* Suivi par la famille */}
           <div className="flex flex-col gap-3 rounded-lg border border-sable-2 bg-creme/60 p-4">
             {actif ? (
@@ -383,32 +380,5 @@ function ChoixStatut({ actif, onClick, children }: { actif: boolean; onClick: ()
     >
       {children}
     </button>
-  )
-}
-
-function Sources({ sources }: { sources: Source[] }) {
-  return (
-    <div className="rounded-lg border border-dashed border-sable-2 p-3">
-      <p className="etiquette mb-1 flex items-center gap-1.5">
-        <ShieldCheck className="size-3.5" aria-hidden />
-        Sources
-      </p>
-      <ul className="flex flex-col gap-1">
-        {sources.map((s) => (
-          <li key={s.libelle} className="flex flex-wrap items-baseline gap-x-2 text-[13px] text-encre">
-            {s.url ? (
-              <a href={s.url} target="_blank" rel="noreferrer" className="text-teal-700 underline">
-                {s.libelle}
-              </a>
-            ) : (
-              <span>{s.libelle}</span>
-            )}
-            <span className={cn('rounded-full px-2 py-0.5 text-[11px]', s.statut === 'verifiee' ? 'bg-teal-100 text-teal-900' : 'bg-sable text-encre-2')}>
-              {s.statut === 'verifiee' ? `vérifiée${s.verifieLe ? ` le ${s.verifieLe}` : ''}` : 'à vérifier'}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
   )
 }

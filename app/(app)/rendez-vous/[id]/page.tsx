@@ -8,6 +8,8 @@ import { useDossier } from '@/lib/store'
 import { aujourdhuiISO, formatDateLongue, formatRelatif } from '@/lib/dates'
 import type { RendezVous } from '@/lib/demo-data'
 import { Entree, ZoneTexte, BoutonPrincipal, BoutonSecondaire, BoutonSuppression } from '@/components/ui/formulaire'
+import { BoutonAgenda, MentionAgenda } from '@/components/bouton-agenda'
+import { evenementDuRendezVous } from '@/lib/export-agenda'
 import { FormulaireRendezVous } from '@/components/formulaire-rendez-vous'
 import { FormulaireEcheance } from '@/components/formulaire-echeance'
 import { cn } from '@/lib/utils'
@@ -18,7 +20,7 @@ type Onglet = (typeof onglets)[number]
 export default function RdvDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { dossier, actions } = useDossier()
+  const { personne, dossier, actions } = useDossier()
   const rdv = dossier.rendezVous.find((r) => r.id === id)
 
   const [onglet, setOnglet] = useState<Onglet>('Avant')
@@ -59,6 +61,13 @@ export default function RdvDetail({ params }: { params: Promise<{ id: string }> 
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <BoutonAgenda
+            evenements={[evenementDuRendezVous(rdv, personne, personne.id)]}
+            nomCalendrier={`Rendez-vous de ${personne.prenom} — Horizon Proche`}
+            nomFichier={`${rdv.intervenant}-${rdv.dateISO}`}
+            libelle="Ajouter à mon agenda"
+            className="h-9 px-4 text-[13px]"
+          />
           <button type="button" onClick={() => setEdition(true)} className="inline-flex items-center gap-1.5 text-[13px] text-encre-2 hover:text-teal-700">
             <Pencil className="size-3.5" aria-hidden />
             Modifier
@@ -230,14 +239,21 @@ function Avant({ rdv }: { rdv: RendezVous }) {
         <p className="etiquette mt-2">Enregistré automatiquement.</p>
       </section>
 
-      <button
-        type="button"
-        onClick={() => window.print()}
-        className="inline-flex h-11 w-fit items-center gap-2 rounded-md border border-sable-2 px-5 text-[15px] text-encre hover:bg-teal-50"
-      >
-        <Printer className="size-4" aria-hidden />
-        Imprimer la préparation
-      </button>
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="inline-flex h-11 w-fit items-center gap-2 rounded-md border border-sable-2 px-5 text-[15px] text-encre hover:bg-teal-50"
+        >
+          <Printer className="size-4" aria-hidden />
+          Imprimer la préparation
+        </button>
+        <MentionAgenda className="max-w-xl" />
+        <p className="etiquette max-w-xl">
+          L’événement exporté emporte vos questions et la liste des pièces : vous les retrouvez dans votre agenda, sur
+          place. Un rappel est posé la veille.
+        </p>
+      </div>
     </div>
   )
 }

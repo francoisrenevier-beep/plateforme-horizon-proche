@@ -7,6 +7,8 @@ import { useDossier } from '@/lib/store'
 import { aujourdhuiISO, formatDateLongue } from '@/lib/dates'
 import type { RendezVous } from '@/lib/demo-data'
 import { BoutonPrincipal } from '@/components/ui/formulaire'
+import { BoutonAgenda, MentionAgenda } from '@/components/bouton-agenda'
+import { evenementDuRendezVous } from '@/lib/export-agenda'
 import { FormulaireRendezVous } from '@/components/formulaire-rendez-vous'
 
 export default function RendezVousPage() {
@@ -24,14 +26,25 @@ export default function RendezVousPage() {
           <h1 className="font-serif text-[26px] text-teal-900">Rendez-vous</h1>
           <p className="mt-1 text-encre-2">Ce qui se prépare et ce qui a été noté pour {personne.prenom}.</p>
         </div>
-        <BoutonPrincipal onClick={() => setAjout(true)}>
-          <Plus className="size-4" aria-hidden />
-          Ajouter un rendez-vous
-        </BoutonPrincipal>
+        <div className="flex flex-wrap gap-2">
+          <BoutonPrincipal onClick={() => setAjout(true)}>
+            <Plus className="size-4" aria-hidden />
+            Ajouter un rendez-vous
+          </BoutonPrincipal>
+          <BoutonAgenda
+            evenements={aVenir.map((r) => evenementDuRendezVous(r, personne, personne.id))}
+            nomCalendrier={`Rendez-vous de ${personne.prenom} — Horizon Proche`}
+            nomFichier={`rendez-vous-${personne.prenom}`}
+            libelle="Ajouter à mon agenda"
+          />
+        </div>
       </header>
 
       <section>
-        <h2 className="etiquette mb-3">À venir</h2>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="etiquette">À venir</h2>
+          {aVenir.length > 0 && <MentionAgenda className="max-w-lg" />}
+        </div>
         <div className="flex flex-col gap-3">
           {aVenir.length === 0 && (
             <p className="rounded-lg border border-dashed border-sable-2 p-6 text-center text-[15px] text-encre-2">Aucun rendez-vous à venir.</p>
