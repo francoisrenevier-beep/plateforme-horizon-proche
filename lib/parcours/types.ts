@@ -42,6 +42,12 @@ export type EtapeParcours = {
   quand: string
   pourquoi: string
   aFaire: string[]
+  // Trois rubriques courtes pour les familles (ajoutées le 16 septembre 2026) — informer et
+  // orienter sans complexifier : ce que l'étape veut dire pour elles, ce qu'elles vont recevoir,
+  // et vers qui se tourner si rien n'avance.
+  enClair?: string
+  vousRecevrez?: string
+  siCaBloque?: string
   // Acteurs à contacter.
   contacts?: ContactEtape[]
   // Documents à réunir ou à produire.
@@ -118,6 +124,8 @@ export type Parcours = {
   publie: boolean
   repere: RepereParcours
   resume: string
+  // « En une page » : ce qu'il faut avoir compris avant de lire les étapes. Quelques phrases.
+  enUnePage?: { titre: string; points: string[] }
   avertissement: string
   phases: PhaseParcours[]
   ressources: { titre: string; texte: string; lien?: Lien }[]

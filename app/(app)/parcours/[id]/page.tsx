@@ -14,6 +14,8 @@ import {
   HelpCircle,
   Plus,
   Pencil,
+  Mail,
+  LifeBuoy,
 } from 'lucide-react'
 import {
   useDossier,
@@ -105,6 +107,28 @@ function EnTete({ p, personne, children }: { p: Parcours; personne: Personne; ch
   )
 }
 
+// Ce qu'il faut avoir compris avant les étapes : quelques phrases, pas un exposé.
+function EnUnePage({ p }: { p: Parcours }) {
+  if (!p.enUnePage) return null
+  return (
+    <section className="rounded-lg border border-teal-100 bg-teal-50 p-6" aria-labelledby="titre-en-une-page">
+      <h2 id="titre-en-une-page" className="font-serif text-xl text-teal-900">
+        {p.enUnePage.titre}
+      </h2>
+      <ol className="mt-4 flex flex-col gap-3">
+        {p.enUnePage.points.map((pt, i) => (
+          <li key={i} className="flex gap-3 text-[15px] leading-relaxed text-encre">
+            <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-teal-100 font-serif text-[13px] text-teal-900" aria-hidden>
+              {i + 1}
+            </span>
+            <span>{pt}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
 function Avertissement({ texte }: { texte: string }) {
   return (
     <div className="flex items-start gap-3 rounded-lg bg-sable p-5">
@@ -192,6 +216,8 @@ function Apercu({ p, personne, documents, onAjouter }: { p: Parcours; personne: 
         </dl>
         <div className="mt-6">{boutonAjout}</div>
       </EnTete>
+
+      <EnUnePage p={p} />
 
       <Avertissement texte={p.avertissement} />
 
@@ -353,6 +379,8 @@ function ParcoursActif({ p, personne, suivi, documents }: { p: Parcours; personn
         </div>
       </EnTete>
 
+      <EnUnePage p={p} />
+
       <Avertissement texte={p.avertissement} />
 
       <ol className="flex flex-col gap-8">
@@ -510,6 +538,10 @@ function CarteEtape({
 
       {ouvert && (
         <div className="flex flex-col gap-5 border-t border-sable-2 px-4 py-5 sm:px-5 sm:pl-[3.75rem]">
+          {etape.enClair && (
+            <p className="rounded-lg bg-teal-50 p-4 text-[16px] leading-relaxed text-teal-900">{etape.enClair}</p>
+          )}
+
           <Section titre="Pourquoi">
             <p>{etape.pourquoi}</p>
           </Section>
@@ -565,6 +597,24 @@ function CarteEtape({
                   <LignePiece key={pc} piece={pc} document={documentPourPiece(pc, documents)} onAjouter={actif ? () => setCapture(pc) : undefined} />
                 ))}
               </ul>
+            </Section>
+          )}
+
+          {etape.vousRecevrez && (
+            <Section titre="Ce que vous allez recevoir">
+              <p className="flex gap-3">
+                <Mail className="mt-1 size-4 shrink-0 text-encre-2" aria-hidden />
+                <span>{etape.vousRecevrez}</span>
+              </p>
+            </Section>
+          )}
+
+          {etape.siCaBloque && (
+            <Section titre="Si ça bloque">
+              <p className="flex gap-3">
+                <LifeBuoy className="mt-1 size-4 shrink-0 text-encre-2" aria-hidden />
+                <span>{etape.siCaBloque}</span>
+              </p>
             </Section>
           )}
 
