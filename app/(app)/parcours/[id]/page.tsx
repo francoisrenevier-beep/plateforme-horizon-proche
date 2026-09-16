@@ -47,11 +47,32 @@ export default function ParcoursDetailPage({ params }: { params: Promise<{ id: s
   const suivi = dossier.parcours[p.id]
   const actif = !!suivi?.active
 
+  // Non publié : le contenu existe mais n'est pas encore ouvert aux familles.
+  if (!p.publie && !actif) return <BientotDisponible p={p} />
+
   // `key` : l'état local (étape ouverte, notes en cours) repart de zéro quand on change de dossier.
   return actif ? (
     <ParcoursActif key={personne.id} p={p} personne={personne} suivi={suivi} documents={dossier.documents} />
   ) : (
     <Apercu key={personne.id} p={p} personne={personne} documents={dossier.documents} onAjouter={() => actions.activerParcours(p.id, true)} />
+  )
+}
+
+function BientotDisponible({ p }: { p: Parcours }) {
+  return (
+    <div className="flex flex-col gap-8">
+      <Link href="/accueil" className="inline-flex items-center gap-2 text-[15px] text-teal-700 hover:underline">
+        <ArrowLeft className="size-4" aria-hidden />
+        Accueil
+      </Link>
+      <div className="rounded-lg border border-dashed border-sable-2 bg-card/60 p-8 text-center">
+        <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-sable text-encre-2">
+          <IconeDuParcours icone={p.icone} className="size-6" />
+        </span>
+        <h1 className="mt-4 font-serif text-[22px] text-encre-2">{p.titre}</h1>
+        <p className="mt-2 text-[15px] text-encre-2">Ce parcours sera bientôt disponible.</p>
+      </div>
+    </div>
   )
 }
 

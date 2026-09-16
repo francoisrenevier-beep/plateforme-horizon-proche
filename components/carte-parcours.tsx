@@ -118,6 +118,30 @@ function Coquille({
 export function CarteParcoursCatalogue({ p, personne }: { p: Parcours; personne: Personne }) {
   const nbEtapes = etapesDuParcours(p).length
   const delaiConfirme = p.delaiRealiste.statut === 'verifiee'
+
+  // Parcours non publié : la famille voit qu'il viendra, sans pouvoir l'ouvrir.
+  if (!p.publie) {
+    return (
+      <div
+        aria-disabled="true"
+        className="flex h-full flex-col rounded-lg border border-dashed border-sable-2 bg-card/60 p-5"
+      >
+        <div className="flex items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sable text-encre-2">
+            <IconeDuParcours icone={p.icone} className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-serif text-lg leading-snug text-encre-2">{p.titre}</h3>
+            <p className="mt-1 line-clamp-2 text-[15px] leading-snug text-encre-2">{p.positionnement}</p>
+          </div>
+        </div>
+        <p className="mt-auto pt-4">
+          <span className="rounded-full bg-sable px-2.5 py-1 text-[13px] text-encre-2">Bientôt disponible</span>
+        </p>
+      </div>
+    )
+  }
+
   return (
     <Coquille p={p} href={`/parcours/${p.id}`} note={pertinenceParcours(p, personne)}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

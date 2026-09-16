@@ -22,6 +22,7 @@ export const entreeEcole: Parcours = {
   delaiRealiste: { texte: 'Commencer 12 à 18 mois avant la rentrée', statut: 'a-verifier' },
   icone: 'school',
   statut: 'provisoire',
+  publie: false,
   repere: 'entree-ecole',
   resume:
     'Dans le canton de Vaud, un enfant entre à l’école l’année de ses 4 ans [À VÉRIFIER : 4 ans révolus au 31 juillet]. Quand ses besoins particuliers sont déjà connus, tout se joue dans les mois qui précèdent : demander les mesures de pédagogie spécialisée, choisir avec l’école la forme de scolarisation, organiser les transports et transmettre ce qui aide votre enfant. Ce parcours met ces étapes dans l’ordre, à partir de sa date de naissance.',
@@ -234,6 +235,7 @@ export const premiereDemandeAi: Parcours = {
   delaiRealiste: { texte: '3 à 12 mois selon la prestation', statut: 'a-verifier' },
   icone: 'hand-heart',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'L’assurance-invalidité n’intervient pas d’elle-même : il faut la solliciter. Pour un enfant, elle peut prendre en charge le traitement de certaines infirmités congénitales, des moyens auxiliaires et, si votre enfant a besoin d’une aide importante au quotidien, verser une allocation pour impotent. Ce parcours suit la demande depuis la constitution du dossier jusqu’à la décision et ses suites.',
@@ -426,6 +428,7 @@ export const entreeEseEnfant: Parcours = {
   delaiRealiste: { texte: '6 à 18 mois selon les places', statut: 'a-verifier' },
   icone: 'building',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Un enfant peut avoir besoin, pour un temps ou durablement, d’être accueilli hors de la maison : internat de semaine lié à une école spécialisée, foyer, accueil relais pour souffler. Dans le canton de Vaud, la porte d’entrée dépend du type d’accueil [À VÉRIFIER : pédagogie spécialisée pour les internats scolaires, Direction générale de l’enfance et de la jeunesse pour les foyers]. Ce parcours aide à clarifier le besoin, à déposer la demande et à préparer l’entrée.',
@@ -562,6 +565,7 @@ export const transitionFormation: Parcours = {
   delaiRealiste: { texte: 'Commencer deux ans avant la fin de l’école', statut: 'a-verifier' },
   icone: 'briefcase',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'La fin de la scolarité ne prévient pas : elle arrive à une date fixe, et sans préparation le jeune se retrouve sans activité. Formation professionnelle initiale soutenue par l’AI, formation pratique, atelier ou centre de jour d’un établissement socio-éducatif : chaque voie a son calendrier, et l’office AI ne peut instruire une formation qu’après une orientation. Ce parcours démarre le jour où vous l’ouvrez, idéalement deux ans avant la fin de l’école.',

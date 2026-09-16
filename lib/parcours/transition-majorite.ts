@@ -25,6 +25,7 @@ export const transitionMajorite: Parcours = {
   delaiRealiste: { texte: 'Environ 2 ans, à commencer vers 16 ans', statut: 'a-verifier' },
   icone: 'cake',
   statut: 'redige',
+  publie: true,
   resume:
     'À 18 ans, votre enfant devient juridiquement adulte. Rien ne se fait automatiquement : les prestations de l’enfance s’arrêtent ou se transforment, d’autres s’ouvrent, et la question de qui l’aide à décider doit être posée. Ce parcours met les étapes dans l’ordre, à partir de sa date de naissance.',
   repere: 'majorite',

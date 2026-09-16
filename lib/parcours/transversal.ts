@@ -27,6 +27,7 @@ export const statutProcheAidant: Parcours = {
   delaiRealiste: { texte: 'Pas de délai officiel ; les aides se demandent au fil de l’eau', statut: 'a-verifier' },
   icone: 'heart-handshake',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Il n’existe pas de « statut » officiel de proche aidant en Suisse, mais il existe des droits : au travail, pour l’AVS, pour souffler. La plupart ne sont pas réclamés parce que personne ne se reconnaît sous ce mot. Ce parcours passe en revue ce qui existe dans le canton de Vaud et au niveau fédéral, et ce qu’il faut faire pour en bénéficier.',
@@ -203,6 +204,7 @@ export const apresDiagnostic: Parcours = {
   delaiRealiste: { texte: 'Les trois premiers mois pour ce qui ne peut pas attendre', statut: 'a-verifier' },
   icone: 'stethoscope',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Les jours qui suivent un diagnostic sont faits pour encaisser, pas pour remplir des formulaires. Pourtant, certaines démarches ont un calendrier qui n’attend pas : une demande AI déposée tard fait perdre des mois de prestations, un employeur non informé ne peut pas aménager. Ce parcours trie ce qui doit être fait tout de suite, ce qui peut attendre un mois, et ce qui se prépare sur plusieurs mois.',
@@ -379,6 +381,7 @@ export const deces: Parcours = {
   delaiRealiste: { texte: 'Quelques semaines pour l’urgent, jusqu’à un an pour la succession', statut: 'a-verifier' },
   icone: 'flower',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Après un décès, l’administratif arrive au pire moment. Certaines choses doivent être faites dans les jours qui suivent, d’autres dans les semaines, et la succession se règle sur des mois. Ce parcours les met dans l’ordre pour que rien ne soit oublié et que rien ne soit fait trop vite — y compris la décision d’accepter ou de refuser une succession. Le dossier de la personne reste consultable après son archivage.',

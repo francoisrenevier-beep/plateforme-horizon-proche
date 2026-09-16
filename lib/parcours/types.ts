@@ -113,6 +113,9 @@ export type Parcours = {
   delaiRealiste: { texte: string; statut: StatutVerification }
   icone: IconeParcours
   statut: StatutParcours
+  // Visible et ouvrable par les familles. Un parcours non publié reste dans le catalogue comme
+  // « bientôt disponible » (carte non cliquable) : son contenu est conservé mais pas exposé.
+  publie: boolean
   repere: RepereParcours
   resume: string
   avertissement: string

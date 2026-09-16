@@ -22,6 +22,7 @@ export const curatelle: Parcours = {
   delaiRealiste: { texte: 'Environ 6 mois', statut: 'a-verifier' },
   icone: 'scale',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Une curatelle est une mesure de protection décidée par la justice de paix, quand un adulte ne peut plus, en tout ou en partie, s’occuper de ses affaires et qu’aucune autre solution ne suffit. Elle n’est jamais automatique et jamais la seule option : ce parcours commence par la question de savoir si elle est nécessaire, puis suit la demande, l’instruction, la décision et ce qui vient après.',
@@ -199,6 +200,7 @@ export const hebergementAdulte: Parcours = {
   delaiRealiste: { texte: 'Souvent plus d’un an d’attente', statut: 'a-verifier' },
   icone: 'building',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Dans le canton de Vaud, l’accès aux établissements socio-éducatifs pour adultes (hébergement, centre de jour, atelier, logement accompagné) passe par le Dispositif cantonal d’indication et de suivi pour personnes en situation de handicap (DCISH). Les places manquent et l’attente se compte en mois, parfois en années : ce parcours aide à s’inscrire tôt, à tenir pendant l’attente et à préparer l’entrée, y compris son financement.',
@@ -376,6 +378,7 @@ export const pcSubsides: Parcours = {
   delaiRealiste: { texte: '2 à 4 mois pour une décision', statut: 'a-verifier' },
   icone: 'coins',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Les prestations complémentaires (PC) à l’AVS et à l’AI complètent une rente insuffisante pour couvrir les besoins vitaux ; elles ouvrent aussi le remboursement de frais de maladie et d’invalidité, et le subside à l’assurance maladie. Elles ne sont jamais versées pour la période antérieure à la demande [À VÉRIFIER] : déposer tôt compte. Ce parcours couvre la vérification du droit, la demande, la décision et les obligations qui suivent.',
@@ -510,6 +513,7 @@ export const logementMoyensAuxiliaires: Parcours = {
   delaiRealiste: { texte: '3 à 6 mois par demande', statut: 'a-verifier' },
   icone: 'accessibility',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Fauteuil roulant, lit électrique, appareil auditif, monte-escalier, salle de bain adaptée : l’AI finance une liste de moyens auxiliaires et certaines adaptations du logement, à condition de demander avant d’acheter. Après l’âge de la retraite, la liste AVS est plus restreinte. Ce parcours aide à évaluer le besoin avec un professionnel, à déposer la demande au bon endroit et à compléter par d’autres sources de financement.',

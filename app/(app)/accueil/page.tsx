@@ -18,7 +18,10 @@ export default function AccueilPage() {
   const [orientation, setOrientation] = useState(false)
 
   const suivis = parcoursSuivis(dossier)
-  const disponibles = listeParcours.filter((p) => !dossier.parcours[p.id]?.active && (filtre === 'tous' || p.categorie === filtre))
+  const disponibles = listeParcours
+    .filter((p) => !dossier.parcours[p.id]?.active && (filtre === 'tous' || p.categorie === filtre))
+    // Les parcours ouvrables d'abord, les « bientôt disponibles » ensuite.
+    .sort((a, b) => Number(b.publie) - Number(a.publie))
 
   return (
     <div className="flex flex-col gap-10">
@@ -104,9 +107,22 @@ export default function AccueilPage() {
           onClose={() => setOrientation(false)}
         >
           <ul className="flex flex-col gap-2">
-            {situations.map((s) => {
+            {[...situations]
+              .sort((a, b) => Number(!!catalogue[b.parcoursId]?.publie) - Number(!!catalogue[a.parcoursId]?.publie))
+              .map((s) => {
               const p = catalogue[s.parcoursId]
               if (!p) return null
+              if (!p.publie) {
+                return (
+                  <li key={s.id} aria-disabled="true" className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-sable-2 px-4 py-3 text-[15px] text-encre-2">
+                    <span>
+                      <span className="block">{s.texte}</span>
+                      <span className="etiquette">→ {p.titre}</span>
+                    </span>
+                    <span className="shrink-0 rounded-full bg-sable px-2.5 py-0.5 text-[12px]">Bientôt</span>
+                  </li>
+                )
+              }
               return (
                 <li key={s.id}>
                   <Link

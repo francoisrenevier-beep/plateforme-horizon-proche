@@ -22,6 +22,7 @@ export const entreeEms: Parcours = {
   delaiRealiste: { texte: 'De quelques semaines à plusieurs mois', statut: 'a-verifier' },
   icone: 'bed',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'L’entrée en établissement médico-social est rarement un choix simple, et rarement une urgence qu’on n’a pas vue venir. Dans le canton de Vaud, elle passe par le Bureau régional d’information et d’orientation (BRIO) du réseau de santé, qui évalue le besoin et gère l’attente. Ce parcours aide à poser la question avec la personne, à s’orienter, à comprendre qui paie, à régler l’administratif et à préparer le jour de l’entrée.',
@@ -256,6 +257,7 @@ export const maintienDomicile: Parcours = {
   delaiRealiste: { texte: 'Première visite en 1 à 2 semaines [À VÉRIFIER]', statut: 'a-verifier' },
   icone: 'house-heart',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Rester chez soi avec de l’aide est possible longtemps, à condition d’organiser cette aide avant que tout repose sur un seul proche. Dans le canton de Vaud, le centre médico-social (CMS) de la région évalue les besoins, met en place soins et aide à domicile, et oriente vers les autres services : repas, transports, accueil de jour, relève. Ce parcours suit la mise en place, le financement et les ajustements.',
@@ -427,6 +429,7 @@ export const directivesMandat: Parcours = {
   delaiRealiste: { texte: 'Quelques semaines, tant que la personne peut décider', statut: 'a-verifier' },
   icone: 'file-signature',
   statut: 'provisoire',
+  publie: false,
   repere: 'activation',
   resume:
     'Deux documents distincts permettent à une personne de garder la main sur son avenir. Les directives anticipées disent quels soins elle accepte ou refuse et qui la représente auprès des médecins. Le mandat pour cause d’inaptitude désigne qui s’occupera d’elle, de ses biens et de ses affaires si elle devient incapable de discernement — et évite souvent une curatelle. Tous deux exigent que la personne soit capable de discernement au moment où elle les rédige : c’est maintenant qu’il faut le faire.',
