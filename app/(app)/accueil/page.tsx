@@ -2,158 +2,134 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Camera, Plus, Route, ChevronRight } from 'lucide-react'
-import { useDossier, useEcheances, useChronologie, contexteCourt, dateMajorite } from '@/lib/store'
-import { aujourdhuiISO, formatDateLongue, formatRelatif } from '@/lib/dates'
-import { parcours as catalogueParcours } from '@/lib/parcours'
-import { Card, CardTitle } from '@/components/ui/card'
-import { EcheanceItem } from '@/components/echeance-item'
-import { Chronologie } from '@/components/chronologie'
-import { CaptureFlow } from '@/components/capture-flow'
-import { BoutonAgenda } from '@/components/bouton-agenda'
-import { evenementDeLEcheance } from '@/lib/export-agenda'
-import { FormulaireEcheance } from '@/components/formulaire-echeance'
+import { ChevronRight, HelpCircle } from 'lucide-react'
+import { useDossier, parcoursSuivis } from '@/lib/store'
+import { listeParcours, CATEGORIES, type CategorieParcours, parcours as catalogue } from '@/lib/parcours'
+import { situations } from '@/lib/parcours/orientation'
+import { CarteParcoursCatalogue, CarteParcoursActif } from '@/components/carte-parcours'
+import { Modale, BoutonSecondaire } from '@/components/ui/formulaire'
+import { cn } from '@/lib/utils'
+
+type Filtre = 'tous' | CategorieParcours
 
 export default function AccueilPage() {
-  const { personne, dossier, titulaire, actions } = useDossier()
-  const echeances = useEcheances()
-  const chronologie = useChronologie()
-  const [capture, setCapture] = useState(false)
-  const [ajoutEcheance, setAjoutEcheance] = useState(false)
+  const { personne, dossier, titulaire } = useDossier()
+  const [filtre, setFiltre] = useState<Filtre>('tous')
+  const [orientation, setOrientation] = useState(false)
 
-  const auj = aujourdhuiISO()
-  const aFaire = echeances.filter((e) => !e.fait && (e.nature === 'delai' || e.dateISO >= auj)).slice(0, 6)
-  const majorite = dateMajorite(personne.naissanceISO)
-  const parcoursSuivis = Object.entries(dossier.parcours)
-    .filter(([, s]) => s.active)
-    .map(([id]) => catalogueParcours[id])
-    .filter(Boolean)
+  const suivis = parcoursSuivis(dossier)
+  const disponibles = listeParcours.filter((p) => !dossier.parcours[p.id]?.active && (filtre === 'tous' || p.categorie === filtre))
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
       <header>
         <h1 className="font-serif text-[26px] text-teal-900">Bonjour {titulaire.prenom}</h1>
-        <p className="mt-1 text-encre-2">{contexteCourt(personne, dossier)}</p>
+        <p className="mt-1 text-encre-2">
+          Dossier de {personne.prenom}, {personne.age} ans ·{' '}
+          {suivis.length === 0 ? 'aucun parcours en cours' : `${suivis.length} parcours en cours`}
+        </p>
       </header>
 
-      {/* À faire prochainement */}
-      <Card className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 p-6 pb-4">
-          <CardTitle>À faire prochainement</CardTitle>
-          <button
-            type="button"
-            onClick={() => setAjoutEcheance(true)}
-            className="inline-flex items-center gap-1.5 text-[15px] text-teal-700 hover:underline"
-          >
-            <Plus className="size-4" aria-hidden />
-            Ajouter
-          </button>
-        </div>
-        <div className="flex flex-col gap-3 px-6 pb-4">
-          {aFaire.length === 0 && (
-            <p className="rounded-lg border border-dashed border-sable-2 p-6 text-center text-[15px] text-encre-2">
-              Rien en attente pour le moment.
-            </p>
-          )}
-          {aFaire.map((e) => (
-            <EcheanceItem key={e.id} echeance={e} onBasculerFait={() => actions.basculerEcheanceFaite(e.id)} />
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-sable-2 px-6 py-4">
-          <Link href="/echeances" className="inline-flex items-center gap-1.5 text-[15px] text-teal-700 hover:underline">
-            Toutes les échéances
-            <ChevronRight className="size-4" aria-hidden />
-          </Link>
-          <BoutonAgenda
-            variante="lien"
-            evenements={aFaire.map((e) => evenementDeLEcheance(e, personne, personne.id))}
-            nomCalendrier={`Échéances de ${personne.prenom} — Horizon Proche`}
-            nomFichier={`echeances-${personne.prenom}`}
-            libelle="Ajouter à mon agenda"
-          />
-        </div>
-      </Card>
-
-      {/* Chronologie — élément signature */}
-      <Card>
-        <CardTitle>Ma chronologie</CardTitle>
-        {majorite >= auj ? (
-          <p className="etiquette mb-6 mt-1">
-            Repère : {formatDateLongue(majorite)} — {personne.prenom} a 18 ans
+      {/* Parcours actifs */}
+      <section aria-labelledby="titre-actifs">
+        <h2 id="titre-actifs" className="font-serif text-xl text-teal-900">
+          En cours pour {personne.prenom}
+        </h2>
+        {suivis.length === 0 ? (
+          <p className="mt-3 rounded-lg border border-dashed border-sable-2 p-6 text-center text-[15px] text-encre-2">
+            Aucun parcours n’est suivi pour {personne.prenom}. Choisissez une situation ci-dessous : vous verrez toutes les
+            étapes avant de décider.
           </p>
         ) : (
-          <p className="etiquette mb-6 mt-1">Ce qui vient, dans l’ordre</p>
-        )}
-        <Chronologie points={chronologie} />
-        <p className="mt-6 border-t border-sable-2 pt-4 text-[15px] leading-relaxed text-encre-2">
-          Cette chronologie est établie à partir de la date de naissance de {personne.prenom}, des courriers que vous avez
-          notés et des parcours que vous suivez. Elle vous propose des moments, pas des obligations.
-        </p>
-      </Card>
-
-      {/* Parcours suivis */}
-      <Card>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Parcours</CardTitle>
-          <Link href="/parcours" className="inline-flex items-center gap-1.5 text-[15px] text-teal-700 hover:underline">
-            <Route className="size-4" aria-hidden />
-            Voir les parcours
-          </Link>
-        </div>
-        {parcoursSuivis.length === 0 ? (
-          <p className="mt-3 text-[15px] leading-relaxed text-encre-2">
-            Un parcours met dans l’ordre les grandes étapes d’une période de vie, comme le passage à la majorité, et
-            explique chacune d’elles. Aucun parcours n’est suivi pour {personne.prenom}.
-          </p>
-        ) : (
-          <ul className="mt-3 flex flex-col gap-2">
-            {parcoursSuivis.map((p) => (
-              <li key={p.id}>
-                <Link
-                  href={`/parcours/${p.id}`}
-                  className="flex items-center justify-between rounded-lg border border-sable-2 px-4 py-3 text-[15px] text-encre transition-colors hover:bg-teal-50"
-                >
-                  {p.titre}
-                  <ChevronRight className="size-4 text-encre-2" aria-hidden />
-                </Link>
-              </li>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {suivis.map(({ p, suivi }) => (
+              <CarteParcoursActif key={p.id} p={p} personne={personne} suivi={suivi} />
             ))}
-          </ul>
+          </div>
         )}
-      </Card>
+      </section>
 
-      {/* Ajouter un document */}
-      <div className="rounded-lg border border-dashed border-sable-2 bg-card/60 p-8 text-center">
-        <h2 className="font-serif text-lg text-teal-900">Ajouter un document</h2>
-        <p className="mt-1 text-[15px] text-encre-2">Un courrier reçu ? Notez-le tout de suite, vous le classerez plus tard.</p>
-        <button
-          type="button"
-          onClick={() => setCapture(true)}
-          className="mx-auto mt-4 flex h-11 items-center gap-2 rounded-md bg-teal-900 px-6 text-[15px] font-medium text-primary-foreground transition-colors hover:bg-teal-700"
-        >
-          <Camera className="size-5" aria-hidden />
-          Ajouter un document
-        </button>
-      </div>
+      {/* Catalogue */}
+      <section aria-labelledby="titre-catalogue">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 id="titre-catalogue" className="font-serif text-xl text-teal-900">
+              Choisir un parcours
+            </h2>
+            <p className="mt-1 max-w-2xl text-[15px] text-encre-2">
+              Une situation, toutes ses étapes dans l’ordre. Les délais indiqués sont des ordres de grandeur, à confirmer
+              auprès de l’autorité concernée.
+            </p>
+          </div>
+          <BoutonSecondaire onClick={() => setOrientation(true)} className="h-10">
+            <HelpCircle className="size-4" aria-hidden />
+            Je ne sais pas par où commencer
+          </BoutonSecondaire>
+        </div>
 
-      {/* Dernières activités */}
-      <Card>
-        <CardTitle>Dernières activités</CardTitle>
-        <ul className="mt-4 flex flex-col divide-y divide-sable-2">
-          {dossier.journal.length === 0 && <li className="py-3 text-[15px] text-encre-2">Aucune activité pour l’instant.</li>}
-          {dossier.journal.slice(0, 8).map((a) => (
-            <li key={a.id} className="flex flex-col py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-baseline sm:justify-between">
-              <span className="text-[15px] text-encre">{a.texte}</span>
-              <span className="etiquette shrink-0 sm:ml-4">
-                {a.auteur} · {formatRelatif(a.quand)}
-              </span>
-            </li>
+        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filtrer par situation">
+          {[{ id: 'tous' as const, libelle: 'Tous' }, ...CATEGORIES].map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setFiltre(c.id)}
+              aria-pressed={filtre === c.id}
+              className={cn(
+                'rounded-full px-3.5 py-1.5 text-[14px] transition-colors',
+                filtre === c.id ? 'bg-teal-100 text-teal-900' : 'border border-sable-2 text-encre hover:bg-teal-50',
+              )}
+            >
+              {c.libelle}
+            </button>
           ))}
-        </ul>
-      </Card>
+        </div>
 
-      {capture && <CaptureFlow onClose={() => setCapture(false)} />}
-      {ajoutEcheance && <FormulaireEcheance onClose={() => setAjoutEcheance(false)} />}
+        {disponibles.length === 0 ? (
+          <p className="mt-4 rounded-lg border border-dashed border-sable-2 p-6 text-center text-[15px] text-encre-2">
+            Tous les parcours de cette catégorie sont déjà suivis pour {personne.prenom}.
+          </p>
+        ) : (
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {disponibles.map((p) => (
+              <CarteParcoursCatalogue key={p.id} p={p} personne={personne} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {orientation && (
+        <Modale
+          titre="Par où commencer ?"
+          sousTitre="Choisissez la phrase qui ressemble le plus à votre situation"
+          onClose={() => setOrientation(false)}
+        >
+          <ul className="flex flex-col gap-2">
+            {situations.map((s) => {
+              const p = catalogue[s.parcoursId]
+              if (!p) return null
+              return (
+                <li key={s.id}>
+                  <Link
+                    href={`/parcours/${p.id}`}
+                    onClick={() => setOrientation(false)}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-sable-2 px-4 py-3 text-[15px] text-encre transition-colors hover:bg-teal-50"
+                  >
+                    <span>
+                      <span className="block">{s.texte}</span>
+                      <span className="etiquette">→ {p.titre}</span>
+                    </span>
+                    <ChevronRight className="size-4 shrink-0 text-encre-2" aria-hidden />
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+          <p className="mt-5 text-[13px] leading-relaxed text-encre-2">
+            Aucune phrase ne correspond ? Parcourez le catalogue par situation, ou appelez la permanence gratuite des proches
+            aidants du canton de Vaud (0800 660 660).
+          </p>
+        </Modale>
+      )}
     </div>
   )
 }

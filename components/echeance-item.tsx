@@ -28,6 +28,8 @@ export function EcheanceItem({
   const basculer = onBasculerFait ?? (() => setFaitLocal((v) => !v))
   const estDelai = echeance.nature === 'delai'
   const issuDuParcours = echeance.origine === 'parcours'
+  // Identifiant des jalons calculés : `parcours:<parcoursId>:<etapeId>` (voir `jalonsDuParcours`).
+  const lienParcours = issuDuParcours ? `/parcours/${echeance.id.split(':')[1] ?? ''}` : '/accueil'
 
   const libelle =
     echeance.date ?? (estDelai ? `avant le ${formatDateLongue(echeance.dateISO)}` : `vers ${formatMoisAnnee(echeance.dateISO)}`)
@@ -73,7 +75,7 @@ export function EcheanceItem({
         {(onModifier || onSupprimer || issuDuParcours) && (
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
             {issuDuParcours && (
-              <Link href="/parcours" className="inline-flex items-center gap-1.5 text-[13px] text-teal-700 hover:underline">
+              <Link href={lienParcours} className="inline-flex items-center gap-1.5 text-[13px] text-teal-700 hover:underline">
                 <Route className="size-3.5" aria-hidden />
                 Voir l’étape du parcours
               </Link>

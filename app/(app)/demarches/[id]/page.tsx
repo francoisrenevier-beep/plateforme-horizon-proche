@@ -32,9 +32,9 @@ export default function FichePage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="flex flex-col gap-8">
-      <Link href="/demarches" className="inline-flex items-center gap-2 text-[15px] text-teal-700 hover:underline">
+      <Link href="/accueil" className="inline-flex items-center gap-2 text-[15px] text-teal-700 hover:underline">
         <ArrowLeft className="size-4" aria-hidden />
-        Toutes les démarches
+        Accueil
       </Link>
 
       {/* En-tête toujours visible */}

@@ -3,39 +3,28 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  Home,
-  FileText,
-  FolderClosed,
-  CalendarClock,
-  CalendarDays,
-  HeartHandshake,
-  Users,
-  Shield,
-  Link2,
-  Settings,
-  Route,
-} from 'lucide-react'
+import { Home, FolderClosed, CalendarDays, Settings } from 'lucide-react'
 import { DossierProvider, useDossier } from '@/lib/store'
 import { PersonSwitcher } from '@/components/person-switcher'
 import { cn } from '@/lib/utils'
 
+// Trois entrées (refonte de septembre 2026) : l'accueil porte les parcours, « Mon dossier » et
+// « Agenda » agrègent ce que les parcours produisent. Les Réglages sont dans un menu secondaire.
 const nav = [
   { href: '/accueil', label: 'Accueil', icon: Home },
-  { href: '/parcours', label: 'Parcours', icon: Route },
-  { href: '/demarches', label: 'Démarches', icon: FileText },
-  { href: '/documents', label: 'Documents', icon: FolderClosed },
-  { href: '/echeances', label: 'Échéances', icon: CalendarClock },
-  { href: '/rendez-vous', label: 'Rendez-vous', icon: CalendarDays },
-  { href: '/portrait', label: 'Portrait', icon: HeartHandshake },
-  { href: '/intervenants', label: 'Intervenants', icon: Users },
+  { href: '/dossier', label: 'Mon dossier', icon: FolderClosed },
+  { href: '/agenda', label: 'Agenda', icon: CalendarDays },
 ]
 
-const navBas = [
-  { href: '/acces', label: 'Accès et rôles', icon: Shield },
-  { href: '/partage', label: 'Partager un lien', icon: Link2 },
-  { href: '/reglages', label: 'Réglages', icon: Settings },
-]
+const navBas = [{ href: '/reglages', label: 'Réglages', icon: Settings }]
+
+// Les écrans de détail restent rattachés à leur entrée principale pour l'état actif.
+const sections: Record<string, string[]> = {
+  '/accueil': ['/accueil', '/parcours'],
+  '/dossier': ['/dossier', '/documents', '/portrait', '/intervenants', '/acces', '/partage', '/demarches'],
+  '/agenda': ['/agenda', '/echeances', '/rendez-vous'],
+  '/reglages': ['/reglages'],
+}
 
 function NavLink({
   href,
@@ -69,7 +58,7 @@ function NavLink({
 function Coquille({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { titulaire, pret } = useDossier()
-  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
+  const isActive = (href: string) => (sections[href] ?? [href]).some((prefixe) => pathname === prefixe || pathname.startsWith(`${prefixe}/`))
   const initiales = `${titulaire.prenom.charAt(0)}${titulaire.nom.charAt(0)}`.toUpperCase()
 
   return (
@@ -114,12 +103,12 @@ function Coquille({ children }: { children: ReactNode }) {
           {pret ? children : <p className="etiquette">Chargement du dossier…</p>}
         </main>
 
-        {/* Navigation mobile en bas */}
+        {/* Navigation mobile en bas : les trois entrées et les réglages */}
         <nav
           aria-label="Navigation principale (mobile)"
-          className="fixed inset-x-0 bottom-0 z-30 flex justify-around overflow-x-auto border-t border-sable-2 bg-creme px-1 py-1 md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-sable-2 bg-creme px-1 py-1 md:hidden"
         >
-          {[...nav.slice(0, 6), navBas[2]].map((item) => (
+          {[...nav, ...navBas].map((item) => (
             <NavLink key={item.href} {...item} active={isActive(item.href)} compact />
           ))}
         </nav>

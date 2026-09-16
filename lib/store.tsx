@@ -44,7 +44,25 @@ import { parcours as catalogueParcours } from '@/lib/parcours'
 import { aujourdhuiISO, formatDateLongue, formatDateMoyenne, formatDateCourte, formatMoisAnnee, maintenantISO } from '@/lib/dates'
 import { dateMajorite, jalonsDesParcours } from '@/lib/selecteurs'
 
-export { dateMajorite, jalonsDesParcours, avancementDemarche, contexteCourt, libelleDate, nomTitulaire } from '@/lib/selecteurs'
+export {
+  dateMajorite,
+  dateEntreeEcole,
+  dateRepere,
+  libelleRepere,
+  jalonsDesParcours,
+  jalonsDuParcours,
+  prochainJalonParcours,
+  avancementParcours,
+  parcoursSuivis,
+  pertinenceParcours,
+  documentPourPiece,
+  piecesDuParcours,
+  contactsDuParcours,
+  avancementDemarche,
+  contexteCourt,
+  libelleDate,
+  nomTitulaire,
+} from '@/lib/selecteurs'
 
 const CLE_STOCKAGE = 'horizon-proche:etat:v1'
 // Plafond de dossiers par abonnement (CLAUDE.md §9.1). Les dossiers archivés n'y comptent pas (§9.7).
