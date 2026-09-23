@@ -92,8 +92,12 @@ export type Intervenant = {
   fonction: string
   telephone: string
   courriel: string
+  adresse?: string
+  site?: string
+  horaires?: string
   reference?: string
   dernierContact?: string
+  notes?: string
 }
 
 export type Reference = { id: string; label: string; valeur: string }

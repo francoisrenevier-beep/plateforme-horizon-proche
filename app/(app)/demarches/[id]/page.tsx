@@ -159,12 +159,12 @@ export default function FichePage({ params }: { params: Promise<{ id: string }> 
       <Bloc numero={3} titre="Qui décide, et où">
         <p>{fiche.q000decide.autorite}.</p>
         {intervenant ? (
-          <Link href="/intervenants" className="mt-2 inline-flex items-center gap-1.5 text-[15px] text-teal-700 hover:underline">
+          <Link href="/contacts" className="mt-2 inline-flex items-center gap-1.5 text-[15px] text-teal-700 hover:underline">
             Voir la fiche de l’intervenant ({intervenant.organisation})
             <ExternalLink className="size-3.5" aria-hidden />
           </Link>
         ) : (
-          <Link href="/intervenants" className="mt-2 inline-flex items-center gap-1.5 text-[15px] text-teal-700 hover:underline">
+          <Link href="/contacts" className="mt-2 inline-flex items-center gap-1.5 text-[15px] text-teal-700 hover:underline">
             Ajouter cette autorité à vos intervenants
             <ExternalLink className="size-3.5" aria-hidden />
           </Link>

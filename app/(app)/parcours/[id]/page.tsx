@@ -663,8 +663,11 @@ function CarteEtape({
 
           {/* Suivi par la famille */}
           {actif && onStatut && onNote && (
-            <div className="flex flex-col gap-3 rounded-lg border border-sable-2 bg-creme/60 p-4">
-              <p className="etiquette">Où en êtes-vous ?</p>
+            <div className="flex flex-col gap-4 rounded-lg border border-teal-100 bg-teal-50/60 p-4 sm:p-5">
+              <div>
+                <p className="etiquette text-teal-700">Votre suivi</p>
+                <p className="mt-1 text-[14px] leading-relaxed text-encre-2">Marquez l’avancement et gardez ici vos propres repères. Ces notes restent dans votre dossier.</p>
+              </div>
               <div className="flex flex-wrap gap-2">
                 <ChoixStatut actif={statut === 'a-faire'} onClick={() => onStatut('a-faire')}>
                   {question ? 'À discuter' : 'À faire'}

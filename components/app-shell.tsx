@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, FolderClosed, CalendarDays, Settings } from 'lucide-react'
+import { Home, FolderClosed, CalendarDays, Settings, MessageCircle } from 'lucide-react'
 import { DossierProvider, useDossier } from '@/lib/store'
 import { PersonSwitcher } from '@/components/person-switcher'
 import { cn } from '@/lib/utils'
@@ -16,14 +16,18 @@ const nav = [
   { href: '/agenda', label: 'Agenda', icon: CalendarDays },
 ]
 
-const navBas = [{ href: '/reglages', label: 'Réglages', icon: Settings }]
+const navBas = [
+  { href: '/assistance', label: 'Mes questions', icon: MessageCircle },
+  { href: '/reglages', label: 'Réglages', icon: Settings },
+]
 
 // Les écrans de détail restent rattachés à leur entrée principale pour l'état actif.
 const sections: Record<string, string[]> = {
   '/accueil': ['/accueil', '/parcours'],
-  '/dossier': ['/dossier', '/documents', '/portrait', '/intervenants', '/acces', '/partage', '/demarches'],
+  '/dossier': ['/dossier', '/documents', '/portrait', '/intervenants', '/contacts', '/acces', '/partage', '/demarches'],
   '/agenda': ['/agenda', '/echeances', '/rendez-vous'],
   '/reglages': ['/reglages'],
+  '/assistance': ['/assistance'],
 }
 
 function NavLink({

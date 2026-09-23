@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, HelpCircle } from 'lucide-react'
+import { ChevronRight, HelpCircle, Search } from 'lucide-react'
 import { useDossier, parcoursSuivis } from '@/lib/store'
 import { listeParcours, CATEGORIES, type CategorieParcours, parcours as catalogue } from '@/lib/parcours'
 import { situations } from '@/lib/parcours/orientation'
@@ -12,16 +12,33 @@ import { cn } from '@/lib/utils'
 
 type Filtre = 'tous' | CategorieParcours
 
+const descriptionsCategories: Record<CategorieParcours, string> = {
+  enfant: 'École, formation, majorité et premières demandes.',
+  adulte: 'Hébergement, emploi, finances et protection.',
+  'personne-agee': 'Entrée en EMS, maintien à domicile et décisions à venir.',
+  transversal: 'Les démarches qui concernent de nombreuses familles.',
+}
+
 export default function AccueilPage() {
   const { personne, dossier, titulaire } = useDossier()
   const [filtre, setFiltre] = useState<Filtre>('tous')
+  const [recherche, setRecherche] = useState('')
   const [orientation, setOrientation] = useState(false)
 
   const suivis = parcoursSuivis(dossier)
+  const rechercheNormalisee = recherche.trim().toLocaleLowerCase('fr')
   const disponibles = listeParcours
     .filter((p) => !dossier.parcours[p.id]?.active && (filtre === 'tous' || p.categorie === filtre))
+    .filter((p) => !rechercheNormalisee || `${p.titre} ${p.positionnement} ${p.resume}`.toLocaleLowerCase('fr').includes(rechercheNormalisee))
     // Les parcours ouvrables d'abord, les « bientôt disponibles » ensuite.
     .sort((a, b) => Number(b.publie) - Number(a.publie))
+
+  const etapes = [
+    { titre: 'Décrire la personne accompagnée', detail: 'Pour adapter les démarches à sa situation.', href: '/portrait', fait: dossier.portrait.some((section) => section.texte) },
+    { titre: 'Choisir un premier parcours', detail: 'Pour obtenir une feuille de route concrète.', href: '#titre-catalogue', fait: suivis.length > 0 },
+    { titre: 'Ranger un premier document', detail: 'Pour ne plus chercher vos courriers.', href: '/documents', fait: dossier.documents.length > 0 },
+  ]
+  const progression = etapes.filter((etape) => etape.fait).length
 
   return (
     <div className="flex flex-col gap-10">
@@ -32,6 +49,16 @@ export default function AccueilPage() {
           {suivis.length === 0 ? 'aucun parcours en cours' : `${suivis.length} parcours en cours`}
         </p>
       </header>
+
+      <section className="rounded-lg border border-teal-700/25 bg-teal-50 p-5" aria-labelledby="titre-demarrage">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div><p className="etiquette text-teal-700">Votre espace aidant</p><h2 id="titre-demarrage" className="mt-1 font-serif text-xl text-teal-900">Commencez ici, en trois étapes</h2><p className="mt-1 text-[15px] text-encre-2">Horizon Proche devient utile dès que votre dossier contient un peu de contexte.</p></div>
+          <span className="rounded-full bg-card px-3 py-1.5 text-[13px] font-medium text-teal-900">{progression}/3 terminé{progression > 1 ? 's' : ''}</span>
+        </div>
+        <ol className="mt-5 grid gap-2 sm:grid-cols-3">
+          {etapes.map((etape, index) => <li key={etape.titre}><Link href={etape.href} className="flex h-full gap-3 rounded-md bg-card p-3 transition-colors hover:bg-creme"><span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full text-[13px]', etape.fait ? 'bg-teal-700 text-primary-foreground' : 'bg-sable text-encre-2')}>{etape.fait ? '✓' : index + 1}</span><span><span className="block text-[14px] font-medium text-encre">{etape.titre}</span><span className="mt-0.5 block text-[12px] leading-5 text-encre-2">{etape.detail}</span></span></Link></li>)}
+        </ol>
+      </section>
 
       {/* Parcours actifs */}
       <section aria-labelledby="titre-actifs">
@@ -70,21 +97,48 @@ export default function AccueilPage() {
           </BoutonSecondaire>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filtrer par situation">
-          {[{ id: 'tous' as const, libelle: 'Tous' }, ...CATEGORIES].map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setFiltre(c.id)}
-              aria-pressed={filtre === c.id}
-              className={cn(
-                'rounded-full px-3.5 py-1.5 text-[14px] transition-colors',
-                filtre === c.id ? 'bg-teal-100 text-teal-900' : 'border border-sable-2 text-encre hover:bg-teal-50',
-              )}
-            >
-              {c.libelle}
-            </button>
-          ))}
+        <label className="relative mt-5 block max-w-xl">
+          <span className="sr-only">Rechercher un parcours</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-encre-2" aria-hidden />
+          <input
+            value={recherche}
+            onChange={(event) => setRecherche(event.target.value)}
+            placeholder="Rechercher : AI, hébergement, curatelle…"
+            className="h-11 w-full rounded-md border border-sable-2 bg-card pl-10 pr-4 text-[15px] text-encre outline-none transition-colors placeholder:text-encre-2 focus:border-teal-700 focus:ring-2 focus:ring-teal-700/15"
+          />
+        </label>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2" role="group" aria-label="Choisir une situation">
+          {CATEGORIES.map((c) => {
+            const nombre = listeParcours.filter((p) => p.categorie === c.id && p.publie).length
+            const selectionnee = filtre === c.id
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setFiltre(selectionnee ? 'tous' : c.id)}
+                aria-pressed={selectionnee}
+                className={cn(
+                  'flex min-h-[112px] flex-col items-start rounded-lg border p-4 text-left transition-colors',
+                  selectionnee ? 'border-teal-700 bg-teal-50' : 'border-sable-2 bg-card hover:border-teal-700/40 hover:bg-teal-50/60',
+                )}
+              >
+                <span className="flex w-full items-start justify-between gap-3">
+                  <span className="font-serif text-lg text-teal-900">{c.libelle}</span>
+                  <span className="rounded-full bg-sable px-2 py-0.5 text-[12px] text-encre-2">{nombre} parcours</span>
+                </span>
+                <span className="mt-2 max-w-sm text-[14px] leading-relaxed text-encre-2">{descriptionsCategories[c.id]}</span>
+                <span className="mt-auto pt-3 text-[13px] font-medium text-teal-700">{selectionnee ? 'Afficher toutes les situations' : 'Voir les parcours →'}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <p className="text-[13px] text-encre-2">
+            {filtre === 'tous' ? 'Tous les parcours disponibles' : `Parcours pour : ${CATEGORIES.find((c) => c.id === filtre)?.libelle}`}
+          </p>
+          {filtre !== 'tous' && <button type="button" onClick={() => setFiltre('tous')} className="text-[13px] font-medium text-teal-700 underline-offset-4 hover:underline">Tout afficher</button>}
         </div>
 
         {disponibles.length === 0 ? (

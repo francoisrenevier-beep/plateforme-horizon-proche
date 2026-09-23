@@ -106,9 +106,14 @@ function Coquille({
         </div>
       </div>
 
-      {note && <p className="mt-3 rounded-md bg-sable px-3 py-2 text-[13px] text-encre">{note}</p>}
+      {note && (
+        <p className="mt-4 flex items-start gap-2 rounded-md bg-sable px-3 py-2.5 text-[13px] leading-relaxed text-encre">
+          <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-ocre" aria-hidden />
+          <span>{note}</span>
+        </p>
+      )}
 
-      <div className="mt-auto pt-4">{children}</div>
+      <div className="mt-auto pt-5">{children}</div>
     </Link>
   )
 }
