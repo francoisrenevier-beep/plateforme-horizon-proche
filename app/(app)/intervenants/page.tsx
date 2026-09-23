@@ -30,10 +30,10 @@ export default function IntervenantsPage() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="etiquette">Dossier de {personne.prenom}</p>
-          <h1 className="mt-1 font-serif text-[26px] text-teal-900">Les intervenants</h1>
+          <h1 className="mt-1 font-serif text-[26px] text-teal-900">Contacts utiles</h1>
           <p className="mt-2 max-w-xl text-pretty leading-relaxed text-encre-2">
-            Toutes les personnes et institutions liées au dossier, avec leurs coordonnées et vos numéros de référence. Rien
-            n’est envoyé automatiquement : ces fiches sont là pour vous.
+            Retrouvez au même endroit les personnes, services et institutions qui accompagnent votre proche. Ajoutez leurs coordonnées,
+            vos numéros de référence et la dernière information utile pour ne plus chercher dans vos papiers.
           </p>
         </div>
         <BoutonPrincipal onClick={() => setAjout(true)}>

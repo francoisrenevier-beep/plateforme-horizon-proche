@@ -24,7 +24,7 @@ const navBas = [
 // Les écrans de détail restent rattachés à leur entrée principale pour l'état actif.
 const sections: Record<string, string[]> = {
   '/accueil': ['/accueil', '/parcours'],
-  '/dossier': ['/dossier', '/documents', '/portrait', '/intervenants', '/acces', '/partage', '/demarches'],
+  '/dossier': ['/dossier', '/documents', '/portrait', '/intervenants', '/contacts', '/acces', '/partage', '/demarches'],
   '/agenda': ['/agenda', '/echeances', '/rendez-vous'],
   '/reglages': ['/reglages'],
   '/assistance': ['/assistance'],

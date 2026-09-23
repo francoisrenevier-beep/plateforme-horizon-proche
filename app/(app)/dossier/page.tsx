@@ -23,7 +23,7 @@ export default function DossierPage() {
 
   const volets = [
     { href: '/portrait', icon: HeartHandshake, titre: 'Portrait', detail: `${sectionsRemplies} section${sectionsRemplies > 1 ? 's' : ''} sur 7` },
-    { href: '/intervenants', icon: Users, titre: 'Intervenants', detail: `${dossier.intervenants.length} contact${dossier.intervenants.length > 1 ? 's' : ''}` },
+    { href: '/contacts', icon: Users, titre: 'Contacts utiles', detail: `${dossier.intervenants.length} contact${dossier.intervenants.length > 1 ? 's' : ''}` },
     { href: '/acces', icon: Shield, titre: 'Accès et rôles', detail: `${dossier.acces.length} personne${dossier.acces.length > 1 ? 's' : ''}` },
     { href: '/partage', icon: Link2, titre: 'Partager un lien', detail: 'Consultation temporaire' },
   ]

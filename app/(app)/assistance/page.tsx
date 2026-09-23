@@ -83,7 +83,7 @@ export default function AssistancePage() {
         <h2 className="font-serif text-xl text-teal-900">Pour avancer sans attendre</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <Link href="/documents" className="flex items-center justify-between rounded-md bg-card px-4 py-3 text-[15px] text-encre hover:bg-teal-50"><span>Ouvrir le coffre de documents</span><ChevronRight className="size-4 text-encre-2" aria-hidden /></Link>
-          <Link href="/intervenants" className="flex items-center justify-between rounded-md bg-card px-4 py-3 text-[15px] text-encre hover:bg-teal-50"><span>Retrouver mes contacts</span><ChevronRight className="size-4 text-encre-2" aria-hidden /></Link>
+          <Link href="/contacts" className="flex items-center justify-between rounded-md bg-card px-4 py-3 text-[15px] text-encre hover:bg-teal-50"><span>Retrouver mes contacts</span><ChevronRight className="size-4 text-encre-2" aria-hidden /></Link>
         </div>
         <p className="mt-4 text-[13px] leading-5 text-encre-2">Horizon Proche vous aide à comprendre et organiser vos démarches. Ce service ne remplace pas un conseil juridique, médical ou social.</p>
       </section>
