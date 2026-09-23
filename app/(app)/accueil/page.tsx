@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, HelpCircle } from 'lucide-react'
+import { ChevronRight, HelpCircle, Search } from 'lucide-react'
 import { useDossier, parcoursSuivis } from '@/lib/store'
 import { listeParcours, CATEGORIES, type CategorieParcours, parcours as catalogue } from '@/lib/parcours'
 import { situations } from '@/lib/parcours/orientation'
@@ -22,11 +22,14 @@ const descriptionsCategories: Record<CategorieParcours, string> = {
 export default function AccueilPage() {
   const { personne, dossier, titulaire } = useDossier()
   const [filtre, setFiltre] = useState<Filtre>('tous')
+  const [recherche, setRecherche] = useState('')
   const [orientation, setOrientation] = useState(false)
 
   const suivis = parcoursSuivis(dossier)
+  const rechercheNormalisee = recherche.trim().toLocaleLowerCase('fr')
   const disponibles = listeParcours
     .filter((p) => !dossier.parcours[p.id]?.active && (filtre === 'tous' || p.categorie === filtre))
+    .filter((p) => !rechercheNormalisee || `${p.titre} ${p.positionnement} ${p.resume}`.toLocaleLowerCase('fr').includes(rechercheNormalisee))
     // Les parcours ouvrables d'abord, les « bientôt disponibles » ensuite.
     .sort((a, b) => Number(b.publie) - Number(a.publie))
 
@@ -93,6 +96,17 @@ export default function AccueilPage() {
             Je ne sais pas par où commencer
           </BoutonSecondaire>
         </div>
+
+        <label className="relative mt-5 block max-w-xl">
+          <span className="sr-only">Rechercher un parcours</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-encre-2" aria-hidden />
+          <input
+            value={recherche}
+            onChange={(event) => setRecherche(event.target.value)}
+            placeholder="Rechercher : AI, hébergement, curatelle…"
+            className="h-11 w-full rounded-md border border-sable-2 bg-card pl-10 pr-4 text-[15px] text-encre outline-none transition-colors placeholder:text-encre-2 focus:border-teal-700 focus:ring-2 focus:ring-teal-700/15"
+          />
+        </label>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2" role="group" aria-label="Choisir une situation">
           {CATEGORIES.map((c) => {
