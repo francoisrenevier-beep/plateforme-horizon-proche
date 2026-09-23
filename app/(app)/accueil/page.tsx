@@ -12,6 +12,13 @@ import { cn } from '@/lib/utils'
 
 type Filtre = 'tous' | CategorieParcours
 
+const descriptionsCategories: Record<CategorieParcours, string> = {
+  enfant: 'École, formation, majorité et premières demandes.',
+  adulte: 'Hébergement, emploi, finances et protection.',
+  'personne-agee': 'Entrée en EMS, maintien à domicile et décisions à venir.',
+  transversal: 'Les démarches qui concernent de nombreuses familles.',
+}
+
 export default function AccueilPage() {
   const { personne, dossier, titulaire } = useDossier()
   const [filtre, setFiltre] = useState<Filtre>('tous')
@@ -87,21 +94,37 @@ export default function AccueilPage() {
           </BoutonSecondaire>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filtrer par situation">
-          {[{ id: 'tous' as const, libelle: 'Tous' }, ...CATEGORIES].map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setFiltre(c.id)}
-              aria-pressed={filtre === c.id}
-              className={cn(
-                'rounded-full px-3.5 py-1.5 text-[14px] transition-colors',
-                filtre === c.id ? 'bg-teal-100 text-teal-900' : 'border border-sable-2 text-encre hover:bg-teal-50',
-              )}
-            >
-              {c.libelle}
-            </button>
-          ))}
+        <div className="mt-5 grid gap-3 sm:grid-cols-2" role="group" aria-label="Choisir une situation">
+          {CATEGORIES.map((c) => {
+            const nombre = listeParcours.filter((p) => p.categorie === c.id && p.publie).length
+            const selectionnee = filtre === c.id
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setFiltre(selectionnee ? 'tous' : c.id)}
+                aria-pressed={selectionnee}
+                className={cn(
+                  'flex min-h-[112px] flex-col items-start rounded-lg border p-4 text-left transition-colors',
+                  selectionnee ? 'border-teal-700 bg-teal-50' : 'border-sable-2 bg-card hover:border-teal-700/40 hover:bg-teal-50/60',
+                )}
+              >
+                <span className="flex w-full items-start justify-between gap-3">
+                  <span className="font-serif text-lg text-teal-900">{c.libelle}</span>
+                  <span className="rounded-full bg-sable px-2 py-0.5 text-[12px] text-encre-2">{nombre} parcours</span>
+                </span>
+                <span className="mt-2 max-w-sm text-[14px] leading-relaxed text-encre-2">{descriptionsCategories[c.id]}</span>
+                <span className="mt-auto pt-3 text-[13px] font-medium text-teal-700">{selectionnee ? 'Afficher toutes les situations' : 'Voir les parcours →'}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <p className="text-[13px] text-encre-2">
+            {filtre === 'tous' ? 'Tous les parcours disponibles' : `Parcours pour : ${CATEGORIES.find((c) => c.id === filtre)?.libelle}`}
+          </p>
+          {filtre !== 'tous' && <button type="button" onClick={() => setFiltre('tous')} className="text-[13px] font-medium text-teal-700 underline-offset-4 hover:underline">Tout afficher</button>}
         </div>
 
         {disponibles.length === 0 ? (
