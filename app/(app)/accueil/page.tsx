@@ -23,6 +23,13 @@ export default function AccueilPage() {
     // Les parcours ouvrables d'abord, les « bientôt disponibles » ensuite.
     .sort((a, b) => Number(b.publie) - Number(a.publie))
 
+  const etapes = [
+    { titre: 'Décrire la personne accompagnée', detail: 'Pour adapter les démarches à sa situation.', href: '/portrait', fait: dossier.portrait.some((section) => section.texte) },
+    { titre: 'Choisir un premier parcours', detail: 'Pour obtenir une feuille de route concrète.', href: '#titre-catalogue', fait: suivis.length > 0 },
+    { titre: 'Ranger un premier document', detail: 'Pour ne plus chercher vos courriers.', href: '/documents', fait: dossier.documents.length > 0 },
+  ]
+  const progression = etapes.filter((etape) => etape.fait).length
+
   return (
     <div className="flex flex-col gap-10">
       <header>
@@ -32,6 +39,16 @@ export default function AccueilPage() {
           {suivis.length === 0 ? 'aucun parcours en cours' : `${suivis.length} parcours en cours`}
         </p>
       </header>
+
+      <section className="rounded-lg border border-teal-700/25 bg-teal-50 p-5" aria-labelledby="titre-demarrage">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div><p className="etiquette text-teal-700">Votre espace aidant</p><h2 id="titre-demarrage" className="mt-1 font-serif text-xl text-teal-900">Commencez ici, en trois étapes</h2><p className="mt-1 text-[15px] text-encre-2">Horizon Proche devient utile dès que votre dossier contient un peu de contexte.</p></div>
+          <span className="rounded-full bg-card px-3 py-1.5 text-[13px] font-medium text-teal-900">{progression}/3 terminé{progression > 1 ? 's' : ''}</span>
+        </div>
+        <ol className="mt-5 grid gap-2 sm:grid-cols-3">
+          {etapes.map((etape, index) => <li key={etape.titre}><Link href={etape.href} className="flex h-full gap-3 rounded-md bg-card p-3 transition-colors hover:bg-creme"><span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full text-[13px]', etape.fait ? 'bg-teal-700 text-primary-foreground' : 'bg-sable text-encre-2')}>{etape.fait ? '✓' : index + 1}</span><span><span className="block text-[14px] font-medium text-encre">{etape.titre}</span><span className="mt-0.5 block text-[12px] leading-5 text-encre-2">{etape.detail}</span></span></Link></li>)}
+        </ol>
+      </section>
 
       {/* Parcours actifs */}
       <section aria-labelledby="titre-actifs">
