@@ -120,40 +120,67 @@ D'après `package.json` : Next 16.3.0, React 19, Tailwind 4.3.3 (CSS-first,
 `@base-ui/react` 1.5.0, `lucide-react` 1.16.0. Aucune dépendance Supabase
 présente pour l'instant — il n'y a pas de backend.
 
-### 3.1.1 Couche de données locale (état intermédiaire, septembre 2026)
+### 3.1.1 Couche de données locale chiffrée (état au 19 octobre 2026)
 
-En attendant l'étape 1 de §8, toute l'application lit et écrit dans une
-**couche de données locale** : `lib/store.tsx` (`DossierProvider`,
-`useDossier()`, `useEcheances()`, `useChronologie()`), amorcée par
-`lib/demo-data.ts` (`creerEtatInitial()`), persistée dans `localStorage`
-(clé `horizon-proche:etat:v1`). Les sélecteurs purs (jalons calculés,
-avancement d'une démarche) sont dans `lib/selecteurs.ts`, sans React.
+Toute l'application lit et écrit dans `lib/store.tsx` (`DossierProvider`,
+`useDossier()`, `useEcheances()`, `useChronologie()`). Le store ne touche
+jamais au stockage : il remet chaque nouvel état à `persister`, fourni par le
+coffre.
+
+Le coffre (`components/securite/verrou-coffre.tsx`) enveloppe tout le groupe
+`(app)`. Rien n'est rendu tant qu'il n'est pas ouvert ; verrouillé, l'état
+déchiffré quitte la mémoire. Un rechargement de page referme le coffre : c'est
+voulu.
+
+- `lib/securite/crypto.ts` : AES-256-GCM, clé de coffre (DEK) enveloppée deux
+  fois, par la phrase secrète et par le code de secours (PBKDF2-SHA-256,
+  600 000 itérations, sel par enveloppe). Une clé par fichier (FEK), enveloppée
+  par la DEK. Changer de phrase ne rechiffre pas les données.
+- `lib/securite/stockage.ts` : IndexedDB `horizon-proche-coffre`. Seuls sont
+  écrits l'enveloppe, l'état chiffré, les fichiers chiffrés (métadonnées
+  comprises) et un compteur d'essais manqués. **Aucune donnée personnelle en
+  clair, nulle part.** L'ancienne clé `localStorage` en clair de la maquette est
+  migrée puis effacée à la création du coffre.
+- `lib/compte.ts` : abonnement, consentements horodatés, réglages de sécurité,
+  journal de sécurité. Vit dans l'état chiffré.
+- Mode dégradé (§9.6) : une seule garde, dans `lib/store.tsx`. Hors
+  `ACTIONS_LECTURE`, toute action est refusée et signalée quand
+  `abonnementOuvert()` est faux. Ne jamais dupliquer cette garde dans les écrans.
 
 Règles :
-- Les écrans ne parlent qu'à `useDossier()` et à ses `actions`. Aucun écran
-  n'importe directement les tableaux de démonstration (`documentsNoah`, etc.).
-- Le contenu de `(app)` n'est rendu qu'une fois l'état chargé côté client
-  (`pret`) : il dépend de la date du jour et du stockage local, un rendu
-  serveur créerait des écarts d'hydratation.
-- Le remplacement par Supabase se fera dans `lib/store.tsx` (et un adaptateur
-  de persistance), pas dans les écrans. Le modèle `DossierData` (un objet par
-  dossier) préfigure la table `beneficiaire` et ses tables filles.
-- Le plafond de 3 dossiers (§9.1) et l'archivage (§9.7) sont déjà appliqués
-  dans le store (`LIMITE_DOSSIERS`, `archiverPersonne`).
+- Les écrans ne parlent qu'à `useDossier()` / `useSecurite()`. Jamais
+  d'accès direct à IndexedDB, `localStorage` ou `crypto.subtle` hors de
+  `lib/securite/`.
+- Aucun texte, titre, nom de fichier ou métadonnée ne s'écrit en clair.
+- Le plafond de 3 dossiers (§9.1) et l'archivage (§9.7) sont appliqués dans le
+  store (`LIMITE_DOSSIERS`, `archiverPersonne`).
+- Le simulateur d'abonnement des réglages est un outil de prototype : il
+  disparaît quand le webhook Stripe existe.
 
-### 3.2 Visée **[À VALIDER — confirmer que ces choix tiennent toujours]**
+Le test de bout en bout du coffre (création, chiffrement vérifié dans
+IndexedDB, fichier, verrouillage, essai manqué, mode dégradé, code de secours,
+sauvegarde, effacement, restauration, absence de violation CSP) doit rester vert
+après toute modification de `lib/securite/` ou de `lib/store.tsx`.
 
-- Backend : Supabase (Postgres + `@supabase/ssr` + RLS).
-- Authentification : Supabase Auth.
-- Modèle de données pivot : table `beneficiaire` (un dossier = une personne
-  accompagnée) et table `acces` (qui peut voir quoi, sur quel dossier, avec
-  quelles limites — reflet direct du modèle observé en §2.4).
-- Politiques RLS écrites et testées **avant** de brancher le moindre écran de
-  l'application sur des données réelles (voir §8).
+### 3.2 Visée — hébergement Infomaniak (décision d'octobre 2026)
 
-L'étape 1 doit vérifier précisément la compatibilité de ces choix avec les
-versions réelles ci-dessus (notamment Next 16 + `@supabase/ssr`, et
-`shadcn` + `@base-ui/react` plutôt que Radix).
+- Hébergement **en Suisse, chez Infomaniak**, pour l'application et les
+  données. Vercel et Supabase sont abandonnés comme cible de production.
+  Plus aucun service américain dans la chaîne, à l'exception de Stripe pour le
+  paiement (§9).
+- Le serveur ne reçoit que des blocs chiffrés (enveloppe, état, fichiers) :
+  modèle **zéro connaissance**. Il ne voit jamais la phrase secrète ni la DEK.
+  Il connaît uniquement ce qui sert à l'authentification, à l'abonnement et au
+  partage (identifiants de comptes et de dossiers, rôles, dates).
+- Authentification : compte serveur distinct de la phrase secrète. La phrase
+  secrète ne sert jamais de mot de passe de connexion. **[À VALIDER]** :
+  bibliothèque d'authentification et base (PostgreSQL managé Infomaniak
+  envisagé).
+- Partage entre membres d'un dossier : la DEK du dossier est enveloppée pour
+  chaque membre avec sa clé publique (X25519, `@noble/curves`). Lien de
+  consultation : clé dans le fragment `#…`, jamais transmis au serveur.
+- Migration Argon2id prévue (champ `kdf` de l'enveloppe), après mesure sur
+  Safari iOS réel.
 
 ---
 
@@ -328,20 +355,45 @@ rendez-vous à venir) et le détail d'un rendez-vous.
 
 ---
 
-## §7 — Sécurité et confidentialité **[À VALIDER dans son ensemble]**
+## §7 — Sécurité et confidentialité
 
-Rien n'est tranché à ce stade sur : l'hébergement des données, qui peut y
-accéder au niveau infrastructure, la politique de rétention/suppression, les
-engagements de non-revente/non-exploitation publicitaire du contenu, les
-modalités d'export d'un dossier. Toute page publique (voir §2.5) doit laisser
-ces réponses en `[À COMPLÉTER]` tant qu'elles ne sont pas validées ici même.
+Décisions en place (octobre 2026) :
+
+- Chiffrement de bout en bout côté navigateur (§3.1.1), zéro connaissance.
+- Consentement explicite à l'ouverture du coffre : traitement de données
+  sensibles et légitimité à agir pour la personne accompagnée. Horodaté avec la
+  version de la politique (`VERSION_POLITIQUE`, `lib/compte.ts`).
+- Droits exercés en libre-service dans les réglages : sauvegarde chiffrée
+  (`.hpcoffre`), export lisible (JSON), suppression complète, journal de
+  sécurité, changement de phrase secrète, nouveau code de secours.
+- Verrouillage automatique (5, 15 ou 30 minutes), pause de 30 s après 5 essais
+  manqués, alerte à l'ouverture suivante.
+- **Aucun outil de mesure d'audience, aucun traceur, aucun script ni police
+  tiers.** `@vercel/analytics` a été retiré ; les polices sont embarquées dans
+  `app/fonts/`. Toute nouvelle dépendance qui appelle un service externe depuis
+  le navigateur est interdite sans validation.
+- En-têtes de sécurité dans `next.config.mjs` (CSP stricte sans origine
+  externe, `frame-ancestors 'none'`, `no-referrer`, HSTS, Permissions-Policy).
+  Toute ressource externe ajoutée doit d'abord être justifiée ici.
+- Politique de confidentialité : `app/(site)/confidentialite/page.tsx`. Ce qui
+  attend une décision ou une relecture juridique y reste en `[À COMPLÉTER]` /
+  `[À VÉRIFIER]` (responsable du traitement, sous-traitance Infomaniak, Stripe,
+  consentement pour un mineur ou une personne sous curatelle, purge des
+  sauvegardes serveur).
+
+Ce qui reste ouvert **[À VALIDER]** : analyse d'impact (AIPD) avant mise en
+production, registre des activités de traitement, contrat de sous-traitance
+Infomaniak, délai d'effacement côté serveur.
 
 ---
 
 ## §8 — Ordre de construction
 
-1. Authentification (Supabase Auth) et modèle `beneficiaire` / `acces` avec
-   politiques RLS écrites et **testées**.
+0. ~~Coffre chiffré local, consentement, droits, mode dégradé simulé~~ (fait,
+   octobre 2026).
+1. Serveur Infomaniak : authentification et modèle `beneficiaire` / `acces`
+   avec contrôle d'accès écrit et **testé** côté serveur, synchronisation des
+   blocs chiffrés (voir `PROMPT-ETAPE-SERVEUR.md`).
 2. Séparation public / application (voir prompt d'amorçage, étape 2).
 3. Page de présentation publique (étape 3).
 4. Branchement progressif des écrans existants sur les données réelles,

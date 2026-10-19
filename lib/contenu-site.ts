@@ -110,7 +110,8 @@ export const distinctionDelaiJalon = {
 export const confidentialite: { question: string; reponse: string }[] = [
   {
     question: 'Où sont hébergées les données ?',
-    reponse: '[À COMPLÉTER]',
+    reponse:
+      'Aujourd’hui, uniquement sur votre appareil, chiffrées. Avec la synchronisation, en Suisse chez Infomaniak, chiffrées avant de quitter votre appareil. Localisation précise et contrat de sous-traitance : [À COMPLÉTER].',
   },
   {
     question: 'Qui peut y accéder, et comment un accès se révoque-t-il ?',
@@ -119,11 +120,13 @@ export const confidentialite: { question: string; reponse: string }[] = [
   },
   {
     question: 'Qu’est-ce que l’outil ne fait jamais avec vos données ?',
-    reponse: '[À COMPLÉTER]',
+    reponse:
+      'Les lire, afficher de la publicité, utiliser des traceurs ou des outils de mesure d’audience, les vendre, ou s’en servir pour entraîner une intelligence artificielle.',
   },
   {
     question: 'Comment exporter ou supprimer un dossier ?',
-    reponse: '[À COMPLÉTER]',
+    reponse:
+      'Depuis les réglages, sans demande à formuler : sauvegarde chiffrée, export lisible, archivage d’un dossier ou suppression complète du coffre.',
   },
 ]
 

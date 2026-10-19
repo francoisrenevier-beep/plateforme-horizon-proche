@@ -1,17 +1,21 @@
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Inter, Lora } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 
-const inter = Inter({
-  subsets: ['latin'],
+// Polices embarquées dans le projet (licence SIL OFL, voir app/fonts/) : aucune requête vers
+// un service tiers, ni à la compilation ni à l'affichage.
+const inter = localFont({
+  src: './fonts/inter-latin-variable.woff2',
   variable: '--font-inter',
   display: 'swap',
+  weight: '100 900',
 })
 
-const lora = Lora({
-  subsets: ['latin'],
-  weight: ['400', '500'],
+const lora = localFont({
+  src: [
+    { path: './fonts/lora-latin-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/lora-latin-500-normal.woff2', weight: '500', style: 'normal' },
+  ],
   variable: '--font-lora',
   display: 'swap',
 })
@@ -27,7 +31,8 @@ export const metadata: Metadata = {
     locale: 'fr_CH',
     type: 'website',
   },
-  generator: 'v0.app',
+  // Aucun outil de mesure d'audience ni traceur : décision de protection des données (CLAUDE.md §7).
+  referrer: 'no-referrer',
 }
 
 export const viewport: Viewport = {
@@ -44,7 +49,6 @@ export default function RootLayout({
     <html lang="fr" className={`${inter.variable} ${lora.variable} bg-background`}>
       <body className="font-sans antialiased">
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )

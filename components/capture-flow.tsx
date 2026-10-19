@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Camera, ImageIcon, Check, ChevronRight, Clock } from 'lucide-react'
-import { useDossier } from '@/lib/store'
+import { X, ImageIcon, Check, ChevronRight, Clock, FileText, ShieldCheck } from 'lucide-react'
+import { useDossier, genId } from '@/lib/store'
+import { useSecurite } from '@/components/securite/contexte-securite'
+import { ChoixFichier, tailleLisible, verifierFichier } from '@/components/securite/apercu-fichier'
 import { estISOValide, formatDateLongue, aujourdhuiISO } from '@/lib/dates'
 import { Champ, Entree, Selection, MessageErreur } from '@/components/ui/formulaire'
 import { cn } from '@/lib/utils'
@@ -10,8 +12,8 @@ import { cn } from '@/lib/utils'
 const TYPES = ['Courrier', 'Décision', 'Formulaire', 'Rapport', 'Attestation', 'Certificat', 'Facture', 'Pièce d’identité', 'Autre']
 
 // Parcours d'ajout en trois étapes — la première suffit (mode « vidage de carton »).
-// La photo elle-même n'est pas encore stockée (pas de backend) : le document est créé avec
-// ses informations, et une date lue sur le courrier devient un délai légal (jamais un jalon).
+// La photo ou le PDF est chiffré dans le navigateur avant d'être rangé dans le coffre. Une date
+// lue sur le courrier devient un délai légal (jamais un jalon).
 export function CaptureFlow({
   onClose,
   titreInitial,
@@ -21,8 +23,12 @@ export function CaptureFlow({
   titreInitial?: string
   demarcheIdInitiale?: string
 }) {
-  const { dossier, actions } = useDossier()
+  const { dossier, actions, lectureSeule } = useDossier()
+  const { enregistrerFichier } = useSecurite()
   const [etape, setEtape] = useState(1)
+  const [fichier, setFichier] = useState<File | null>(null)
+  const [apercu, setApercu] = useState<string | null>(null)
+  const [enCours, setEnCours] = useState(false)
   const [titre, setTitre] = useState(titreInitial ?? '')
   const [type, setType] = useState('Courrier')
   const [dateDoc, setDateDoc] = useState('')
@@ -39,13 +45,39 @@ export function CaptureFlow({
     setEtape(2)
   }
 
-  const terminer = (rapide: boolean) => {
+  const choisirFichier = (f: File) => {
+    const err = verifierFichier(f)
+    if (err) return setErreur(err)
+    setErreur(null)
+    if (apercu) URL.revokeObjectURL(apercu)
+    setFichier(f)
+    setApercu(f.type.startsWith('image/') ? URL.createObjectURL(f) : null)
+    if (!titre.trim()) setTitre(f.name.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').slice(0, 60))
+  }
+
+  const terminer = async (rapide: boolean) => {
     const t = titre.trim() || 'Document sans titre'
     if (!rapide && !sansDate && dateLimite && !estISOValide(dateLimite)) return setErreur('La date limite n’est pas valide.')
+    if (lectureSeule) return setErreur('Votre dossier est en consultation seule : l’ajout de documents reprendra dès la réactivation de l’abonnement.')
     const demarche = dossier.demarches.find((d) => d.id === demarcheId)
     const classe = !rapide && (!!emetteur.trim() || !!demarche)
     const annee = dateDoc ? dateDoc.slice(0, 4) : aujourdhuiISO().slice(0, 4)
+    const nouvelId = genId('doc')
+    let meta: { nom: string; type: string; taille: number } | undefined
+    if (fichier) {
+      setEnCours(true)
+      try {
+        meta = await enregistrerFichier(nouvelId, fichier)
+      } catch (e) {
+        setEnCours(false)
+        return setErreur(e instanceof Error ? e.message : 'Le fichier n’a pas pu être enregistré.')
+      }
+      setEnCours(false)
+      if (apercu) URL.revokeObjectURL(apercu)
+    }
     const docId = actions.ajouterDocument({
+      id: nouvelId,
+      fichier: meta,
       titre: t,
       emetteur: emetteur.trim() || 'Émetteur à préciser',
       date: dateDoc ? formatDateLongue(dateDoc) : formatDateLongue(aujourdhuiISO()),
@@ -97,10 +129,24 @@ export function CaptureFlow({
 
           {etape === 1 && (
             <div className="flex flex-col gap-4">
-              <div className="flex aspect-[3/2] max-h-48 items-center justify-center rounded-lg border border-sable-2 bg-sable">
-                <span className="flex flex-col items-center gap-2 text-encre-2">
-                  <Camera className="size-10" strokeWidth={1.5} aria-hidden />
-                  <span className="etiquette">La photo du document sera conservée ici</span>
+              <div className="flex flex-col items-center gap-3 rounded-lg border border-sable-2 bg-sable p-4">
+                {fichier ? (
+                  apercu ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={apercu} alt="Aperçu du document" className="max-h-40 rounded object-contain" />
+                  ) : (
+                    <span className="flex items-center gap-2 text-encre">
+                      <FileText className="size-6 text-teal-700" aria-hidden />
+                      {fichier.name} · {tailleLisible(fichier.size)}
+                    </span>
+                  )
+                ) : (
+                  <span className="etiquette">Photographiez le courrier ou joignez un PDF. C’est facultatif.</span>
+                )}
+                <ChoixFichier onChoisi={choisirFichier} />
+                <span className="inline-flex items-center gap-1.5 text-[12px] text-encre-2">
+                  <ShieldCheck className="size-3.5 text-teal-700" aria-hidden />
+                  Chiffré sur votre appareil avant d’être rangé
                 </span>
               </div>
               <Champ label="Quel est ce document ?" htmlFor="c-titre" obligatoire aide="Un nom approximatif suffit.">
@@ -214,9 +260,10 @@ export function CaptureFlow({
               <button
                 type="button"
                 onClick={() => terminer(false)}
-                className="flex h-11 items-center justify-center gap-2 rounded-md bg-teal-900 px-6 font-medium text-primary-foreground hover:bg-teal-700"
+                disabled={enCours}
+                className="flex h-11 items-center justify-center gap-2 rounded-md bg-teal-900 px-6 font-medium text-primary-foreground hover:bg-teal-700 disabled:opacity-50"
               >
-                Terminer
+                {enCours ? 'Chiffrement…' : 'Terminer'}
                 <ChevronRight className="size-4" aria-hidden />
               </button>
             </div>
