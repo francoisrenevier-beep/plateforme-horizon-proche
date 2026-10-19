@@ -3,7 +3,8 @@
 import { use, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Download, Share2, Pencil, ImageIcon, X, Clock } from 'lucide-react'
+import { ArrowLeft, Share2, Pencil, X, Clock } from 'lucide-react'
+import { ApercuFichier } from '@/components/securite/apercu-fichier'
 import { useDossier } from '@/lib/store'
 import { formatRelatif, formatDateLongue } from '@/lib/dates'
 import { Modale, Champ, Entree, Selection, BoutonPrincipal, BoutonSecondaire, BoutonSuppression, Pied } from '@/components/ui/formulaire'
@@ -52,13 +53,8 @@ export default function DocumentDetail({ params }: { params: Promise<{ id: strin
       </Link>
 
       <div className="grid gap-6 md:grid-cols-[minmax(0,320px)_1fr]">
-        {/* Image */}
-        <div className="flex aspect-[3/4] items-center justify-center rounded-lg border border-sable-2 bg-sable">
-          <span className="flex flex-col items-center gap-2 text-encre-2">
-            <ImageIcon className="size-12" strokeWidth={1.25} aria-hidden />
-            <span className="etiquette">{doc.type}</span>
-          </span>
-        </div>
+        {/* Photo ou fichier, déchiffré à la demande */}
+        <ApercuFichier doc={doc} />
 
         {/* Informations */}
         <div className="flex flex-col gap-5">
@@ -141,10 +137,6 @@ export default function DocumentDetail({ params }: { params: Promise<{ id: strin
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <BoutonPrincipal title="Disponible quand les fichiers seront stockés">
-              <Download className="size-4" aria-hidden />
-              Télécharger
-            </BoutonPrincipal>
             <BoutonSecondaire onClick={() => router.push('/partage')}>
               <Share2 className="size-4" aria-hidden />
               Partager

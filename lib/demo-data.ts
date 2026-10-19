@@ -5,6 +5,7 @@
 // Convention : toutes les dates sont en ISO (AAAA-MM-JJ) ; les libellés sont dérivés (`lib/dates.ts`).
 
 import { aujourdhuiISO, decalerJours, ageA, formatDateLongue } from '@/lib/dates'
+import { nouveauCompte, type Compte } from '@/lib/compte'
 
 export type Nature = 'delai' | 'jalon'
 
@@ -83,6 +84,9 @@ export type Document = {
   classe: boolean
   ajouteLe?: string // ISO date-heure
   ajoutePar?: string
+  // Fichier joint, conservé chiffré dans le coffre (lib/securite/stockage.ts). Absent pour
+  // les documents de démonstration et ceux enregistrés sans photo.
+  fichier?: { nom: string; type: string; taille: number }
 }
 
 export type Intervenant = {
@@ -194,6 +198,8 @@ export type Etat = {
   personneActiveId: string
   personnes: PersonneBase[]
   dossiers: Record<string, DossierData>
+  // Abonnement, consentements, sécurité (lib/compte.ts)
+  compte: Compte
 }
 
 export function dossierVide(titulaire: Titulaire): DossierData {
@@ -595,5 +601,23 @@ export function creerEtatInitial(): Etat {
     personneActiveId: 'noah',
     personnes,
     dossiers: { noah, madeleine },
+    compte: nouveauCompte(),
+  }
+}
+
+// Premier dossier d'une famille qui démarre sans données de démonstration.
+export function creerEtatVide(titulaire: Titulaire, personne: Omit<PersonneBase, 'id'>): Etat {
+  const id = `p-${Date.now().toString(36)}`
+  const dossier = dossierVide(titulaire)
+  dossier.journal = [
+    { id: `act-${Date.now().toString(36)}`, texte: `Dossier de ${personne.prenom} créé`, auteur: `${titulaire.prenom} ${titulaire.nom}`, quand: new Date().toISOString() },
+  ]
+  return {
+    version: 1,
+    titulaire,
+    personneActiveId: id,
+    personnes: [{ ...personne, id }],
+    dossiers: { [id]: dossier },
+    compte: nouveauCompte(),
   }
 }

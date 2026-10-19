@@ -3,8 +3,11 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, FolderClosed, CalendarDays, Settings, MessageCircle } from 'lucide-react'
-import { DossierProvider, useDossier } from '@/lib/store'
+import { Home, FolderClosed, CalendarDays, Settings, MessageCircle, Lock } from 'lucide-react'
+import { useDossier } from '@/lib/store'
+import { VerrouCoffre } from '@/components/securite/verrou-coffre'
+import { useSecurite } from '@/components/securite/contexte-securite'
+import { BandeauCompte } from '@/components/securite/bandeau-compte'
 import { PersonSwitcher } from '@/components/person-switcher'
 import { cn } from '@/lib/utils'
 
@@ -62,6 +65,7 @@ function NavLink({
 function Coquille({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { titulaire, pret } = useDossier()
+  const { verrouiller } = useSecurite()
   const isActive = (href: string) => (sections[href] ?? [href]).some((prefixe) => pathname === prefixe || pathname.startsWith(`${prefixe}/`))
   const initiales = `${titulaire.prenom.charAt(0)}${titulaire.nom.charAt(0)}`.toUpperCase()
 
@@ -84,10 +88,18 @@ function Coquille({ children }: { children: ReactNode }) {
             <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sable font-serif text-sm text-encre">
               {initiales}
             </span>
-            <span className="text-[15px] text-encre-2">
+            <span className="min-w-0 flex-1 truncate text-[15px] text-encre-2">
               {titulaire.prenom} {titulaire.nom}
             </span>
           </div>
+          <button
+            type="button"
+            onClick={verrouiller}
+            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] text-encre transition-colors hover:bg-teal-50"
+          >
+            <Lock className="size-[18px] shrink-0" strokeWidth={1.75} aria-hidden />
+            Verrouiller
+          </button>
         </div>
       </aside>
 
@@ -96,13 +108,22 @@ function Coquille({ children }: { children: ReactNode }) {
         <header className="flex flex-col gap-3 border-b border-sable-2 bg-creme px-4 py-3 md:hidden">
           <div className="flex items-center gap-3">
             <span className="flex size-9 items-center justify-center rounded-full bg-teal-100 font-serif text-teal-900">H</span>
-            <span className="font-serif text-lg text-teal-900">Horizon Proche</span>
+            <span className="flex-1 font-serif text-lg text-teal-900">Horizon Proche</span>
+            <button
+              type="button"
+              onClick={verrouiller}
+              aria-label="Verrouiller le coffre"
+              className="flex size-10 items-center justify-center rounded-md text-encre-2 hover:bg-teal-50 hover:text-teal-700"
+            >
+              <Lock className="size-5" strokeWidth={1.75} aria-hidden />
+            </button>
           </div>
           <PersonSwitcher />
         </header>
 
         {/* Le contenu dépend de la date du jour et du stockage local : il n'est rendu qu'une fois
             l'état chargé dans le navigateur, pour éviter tout écart avec le rendu serveur. */}
+        <BandeauCompte />
         <main className="mx-auto w-full max-w-[900px] px-5 py-8 pb-24 md:px-10 md:py-12" aria-busy={!pret}>
           {pret ? children : <p className="etiquette">Chargement du dossier…</p>}
         </main>
@@ -123,8 +144,8 @@ function Coquille({ children }: { children: ReactNode }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <DossierProvider>
+    <VerrouCoffre>
       <Coquille>{children}</Coquille>
-    </DossierProvider>
+    </VerrouCoffre>
   )
 }

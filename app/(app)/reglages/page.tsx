@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Pencil, Download, Archive, ArchiveRestore, RotateCcw, Plus } from 'lucide-react'
+import { Pencil, Archive, ArchiveRestore, Plus } from 'lucide-react'
 import { useDossier, LIMITE_DOSSIERS } from '@/lib/store'
 import { formatDateLongue } from '@/lib/dates'
 import { Card, CardTitle } from '@/components/ui/card'
 import { FormulairePersonne } from '@/components/formulaire-personne'
+import { SectionAbonnement, SectionDonnees, SectionSecurite } from '@/components/reglages/sections-compte'
 import { Champ, Entree, BoutonPrincipal, BoutonSecondaire, BoutonSuppression } from '@/components/ui/formulaire'
 
 export default function ReglagesPage() {
@@ -16,25 +17,13 @@ export default function ReglagesPage() {
   const [prenom, setPrenom] = useState(titulaire.prenom)
   const [nom, setNom] = useState(titulaire.nom)
   const [ville, setVille] = useState(titulaire.ville)
-  const [reinit, setReinit] = useState(false)
   const [archivage, setArchivage] = useState(false)
-
-  const exporter = () => {
-    const json = actions.exporterJSON()
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `horizon-proche-export-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
 
   return (
     <div className="flex flex-col gap-8">
       <header>
         <h1 className="font-serif text-[26px] text-teal-900">Réglages</h1>
-        <p className="mt-1 text-encre-2">Votre compte, les personnes que vous accompagnez, vos données.</p>
+        <p className="mt-1 text-encre-2">Les personnes que vous accompagnez, votre abonnement, la sécurité du coffre et vos données.</p>
       </header>
 
       {/* Personne active */}
@@ -177,39 +166,11 @@ export default function ReglagesPage() {
             {titulaire.prenom} {titulaire.nom} · {titulaire.ville} ({titulaire.canton})
           </p>
         )}
-        <p className="etiquette mt-4 border-t border-sable-2 pt-4">
-          Compte, connexion et abonnement : à venir. Pour l’instant, vos données sont enregistrées dans ce navigateur
-          uniquement.
-        </p>
       </Card>
 
-      {/* Données */}
-      <Card>
-        <CardTitle>Vos données</CardTitle>
-        <p className="mt-2 text-[15px] leading-relaxed text-encre-2">
-          Tout ce que vous saisissez est conservé dans ce navigateur. Exportez régulièrement une copie.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <BoutonPrincipal onClick={exporter}>
-            <Download className="size-4" aria-hidden />
-            Exporter tous les dossiers (JSON)
-          </BoutonPrincipal>
-          {reinit ? (
-            <span className="inline-flex flex-wrap items-center gap-2">
-              <span className="text-[15px] text-encre">Effacer vos saisies et revenir aux données de démonstration ?</span>
-              <button type="button" onClick={() => { actions.reinitialiser(); setReinit(false) }} className="inline-flex h-11 items-center rounded-md bg-rouille px-4 text-[15px] font-medium text-primary-foreground">
-                Oui, réinitialiser
-              </button>
-              <BoutonSecondaire onClick={() => setReinit(false)}>Non</BoutonSecondaire>
-            </span>
-          ) : (
-            <BoutonSecondaire onClick={() => setReinit(true)}>
-              <RotateCcw className="size-4" aria-hidden />
-              Réinitialiser les données de démonstration
-            </BoutonSecondaire>
-          )}
-        </div>
-      </Card>
+      <SectionAbonnement />
+      <SectionSecurite />
+      <SectionDonnees />
 
       {editionPersonne && <FormulairePersonne personne={personne} onClose={() => setEditionPersonne(false)} />}
       {ajoutPersonne && <FormulairePersonne onClose={() => setAjoutPersonne(false)} />}

@@ -2,14 +2,17 @@
 
 // Couche de données locale.
 //
-// Il n'y a pas encore de backend (CLAUDE.md §8 : l'authentification et les politiques RLS
-// doivent être en place avant tout branchement sur des données réelles). En attendant, l'état
-// complet vit ici : amorcé par les données de démonstration, modifiable par la famille,
-// persisté dans le navigateur (localStorage). Les écrans ne parlent qu'à cette interface ;
-// quand Supabase arrivera, c'est ce fichier qui change, pas les écrans.
+// Il n'y a pas encore de serveur (CLAUDE.md §8). L'état complet vit ici, en mémoire, une fois le
+// coffre déverrouillé (`components/securite/verrou-coffre.tsx`). Ce fichier ne touche jamais au
+// stockage : il remet chaque nouvel état à `persister`, qui le chiffre avant de l'écrire.
+// Les écrans ne parlent qu'à cette interface ; l'arrivée du serveur ne change pas les écrans.
+//
+// Mode dégradé (§9.6) : quand l'abonnement n'est plus ouvert, toutes les actions d'écriture sont
+// refusées ici, à un seul endroit. Lecture, navigation et exports restent possibles.
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -17,6 +20,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { abonnementOuvert, nouveauCompte, type Compte, type StatutAbonnement } from '@/lib/compte'
 import {
   creerEtatInitial,
   dossierVide,
@@ -64,7 +68,6 @@ export {
   nomTitulaire,
 } from '@/lib/selecteurs'
 
-const CLE_STOCKAGE = 'horizon-proche:etat:v1'
 // Plafond de dossiers par abonnement (CLAUDE.md §9.1). Les dossiers archivés n'y comptent pas (§9.7).
 export const LIMITE_DOSSIERS = 3
 
@@ -73,7 +76,7 @@ export function genId(prefixe: string): string {
 }
 
 // Rend un état chargé conforme à la forme attendue (champs ajoutés depuis la sauvegarde).
-function normaliser(brut: unknown): Etat | null {
+export function normaliser(brut: unknown): Etat | null {
   if (!brut || typeof brut !== 'object') return null
   const e = brut as Partial<Etat>
   if (e.version !== 1 || !Array.isArray(e.personnes) || !e.dossiers || !e.titulaire) return null
@@ -96,7 +99,18 @@ function normaliser(brut: unknown): Etat | null {
   }
   const actif = e.personnes.some((p) => p.id === e.personneActiveId) ? e.personneActiveId! : e.personnes[0]?.id
   if (!actif) return null
-  return { version: 1, titulaire: e.titulaire, personneActiveId: actif, personnes: e.personnes, dossiers }
+  const compte = normaliserCompte(e.compte)
+  return { version: 1, titulaire: e.titulaire, personneActiveId: actif, personnes: e.personnes, dossiers, compte }
+}
+
+function normaliserCompte(c: Partial<Compte> | undefined): Compte {
+  const defaut = nouveauCompte()
+  if (!c) return defaut
+  return {
+    abonnement: c.abonnement ?? defaut.abonnement,
+    consentement: c.consentement ?? defaut.consentement,
+    securite: { verrouillageMinutes: c.securite?.verrouillageMinutes ?? 15, journal: c.securite?.journal ?? [] },
+  }
 }
 
 type Modif<T> = Partial<Omit<T, 'id'>>
@@ -114,7 +128,7 @@ export type ActionsDossier = {
   supprimerEcheance: (id: string) => void
   basculerEcheanceFaite: (id: string) => void
   // Documents
-  ajouterDocument: (d: Omit<Document, 'id' | 'ajouteLe' | 'ajoutePar'>) => string
+  ajouterDocument: (d: Omit<Document, 'id' | 'ajouteLe' | 'ajoutePar'> & { id?: string }) => string
   modifierDocument: (id: string, patch: Modif<Document>) => void
   supprimerDocument: (id: string) => void
   // Intervenants et références
@@ -157,9 +171,23 @@ export type ActionsDossier = {
   exporterJSON: () => string
 }
 
+// Actions qui portent sur le compte, toujours permises (y compris en mode dégradé).
+export type ActionsCompte = {
+  // Simulateur du prototype. En production, seul le webhook Stripe change le statut (§9.4).
+  simulerStatut: (statut: StatutAbonnement, essaiDebutISO?: string) => void
+  setVerrouillage: (minutes: 5 | 15 | 30) => void
+  noterSecurite: (texte: string) => void
+}
+
 type ContexteValeur = {
   etat: Etat
   pret: boolean
+  compte: Compte
+  // Vrai quand l'abonnement n'est plus ouvert : lecture et export seulement (§9.6)
+  lectureSeule: boolean
+  // Horodatage du dernier refus d'écriture, pour afficher un message
+  refus: number
+  actionsCompte: ActionsCompte
   personne: Personne
   personnes: Personne[]
   personnesArchivees: Personne[]
@@ -171,36 +199,35 @@ type ContexteValeur = {
 
 const Contexte = createContext<ContexteValeur | null>(null)
 
-export function DossierProvider({ children }: { children: ReactNode }) {
-  const [etat, setEtat] = useState<Etat>(() => creerEtatInitial())
-  const [pret, setPret] = useState(false)
-  const chargeRef = useRef(false)
+// Actions qui ne modifient rien et restent donc permises en mode dégradé.
+const ACTIONS_LECTURE = new Set<keyof ActionsDossier>(['setPersonneId', 'exporterJSON', 'journaliser'])
 
-  // Chargement depuis le navigateur, une fois monté (évite tout écart serveur/client).
-  useEffect(() => {
-    try {
-      const brut = window.localStorage.getItem(CLE_STOCKAGE)
-      if (brut) {
-        const charge = normaliser(JSON.parse(brut))
-        if (charge) setEtat(charge)
-      }
-    } catch {
-      // stockage indisponible : on reste sur les données d'amorce
-    }
-    chargeRef.current = true
-    setPret(true)
-  }, [])
+export function DossierProvider({
+  children,
+  etatInitial,
+  persister,
+}: {
+  children: ReactNode
+  etatInitial: Etat
+  persister: (etat: Etat) => void
+}) {
+  const [etat, setEtat] = useState<Etat>(etatInitial)
+  const [refus, setRefus] = useState(0)
+  const pret = true
+  const persisterRef = useRef(persister)
+  persisterRef.current = persister
 
+  // Chaque nouvel état part au chiffrement. Le premier rendu aussi : cela fixe la migration
+  // éventuelle (normalisation) dans le coffre.
   useEffect(() => {
-    if (!chargeRef.current) return
-    try {
-      window.localStorage.setItem(CLE_STOCKAGE, JSON.stringify(etat))
-    } catch {
-      // quota ou stockage indisponible : l'état reste en mémoire
-    }
+    persisterRef.current(etat)
   }, [etat])
 
-  const actions = useMemo<ActionsDossier>(() => {
+  const lectureSeule = !abonnementOuvert(etat.compte)
+  const lectureSeuleRef = useRef(lectureSeule)
+  lectureSeuleRef.current = lectureSeule
+
+  const actionsBrutes = useMemo<ActionsDossier>(() => {
     // Modifie le dossier actif (ou celui indiqué) et journalise éventuellement.
     const majDossier = (
       fn: (d: DossierData, etat: Etat) => DossierData,
@@ -318,8 +345,8 @@ export function DossierProvider({ children }: { children: ReactNode }) {
         majDossier((d) => ({ ...d, echeances: d.echeances.map((e) => (e.id === id ? { ...e, fait: !e.fait } : e)) }))
       },
 
-      ajouterDocument: (doc) => {
-        const id = genId('doc')
+      ajouterDocument: ({ id: idFourni, ...doc }) => {
+        const id = idFourni ?? genId('doc')
         majDossier(
           (d, e) => ({
             ...d,
@@ -495,14 +522,8 @@ export function DossierProvider({ children }: { children: ReactNode }) {
         }),
 
       journaliser: (texte) => majDossier((d) => d, texte),
-      reinitialiser: () => {
-        try {
-          window.localStorage.removeItem(CLE_STOCKAGE)
-        } catch {
-          // ignoré
-        }
-        setEtat(creerEtatInitial())
-      },
+      // Revient aux données de démonstration en conservant le compte (abonnement, consentements).
+      reinitialiser: () => setEtat((prev) => ({ ...creerEtatInitial(), compte: prev.compte })),
       exporterJSON: () => {
         let sortie = ''
         setEtat((prev) => {
@@ -514,6 +535,54 @@ export function DossierProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Garde unique du mode dégradé : une action d'écriture refusée ne fait rien et le signale.
+  const actions = useMemo<ActionsDossier>(() => {
+    const gardees = {} as Record<string, unknown>
+    for (const [nom, fn] of Object.entries(actionsBrutes) as [keyof ActionsDossier, (...a: unknown[]) => unknown][]) {
+      gardees[nom] = ACTIONS_LECTURE.has(nom)
+        ? fn
+        : (...args: unknown[]) => {
+            if (lectureSeuleRef.current) {
+              setRefus(Date.now())
+              if (nom === 'ajouterPersonne') return { ok: false, raison: 'Les modifications sont en pause tant que l’abonnement n’est pas réactivé.' }
+              return typeof fn === 'function' && nom.startsWith('ajouter') ? '' : undefined
+            }
+            return fn(...args)
+          }
+    }
+    return gardees as ActionsDossier
+  }, [actionsBrutes])
+
+  const noterSecurite = useCallback((texte: string) => {
+    setEtat((prev) => ({
+      ...prev,
+      compte: {
+        ...prev.compte,
+        securite: {
+          ...prev.compte.securite,
+          journal: [{ id: genId('sec'), quand: maintenantISO(), texte }, ...prev.compte.securite.journal].slice(0, 100),
+        },
+      },
+    }))
+  }, [])
+
+  const actionsCompte = useMemo<ActionsCompte>(
+    () => ({
+      simulerStatut: (statut, essaiDebutISO) =>
+        setEtat((prev) => ({
+          ...prev,
+          compte: {
+            ...prev.compte,
+            abonnement: { statut, essaiDebutISO: essaiDebutISO ?? prev.compte.abonnement.essaiDebutISO },
+          },
+        })),
+      setVerrouillage: (minutes) =>
+        setEtat((prev) => ({ ...prev, compte: { ...prev.compte, securite: { ...prev.compte.securite, verrouillageMinutes: minutes } } })),
+      noterSecurite,
+    }),
+    [noterSecurite],
+  )
+
   const valeur = useMemo<ContexteValeur>(() => {
     const toutes = etat.personnes.map(enrichirPersonne)
     const personnes = toutes.filter((p) => !p.archive)
@@ -522,6 +591,10 @@ export function DossierProvider({ children }: { children: ReactNode }) {
     return {
       etat,
       pret,
+      compte: etat.compte,
+      lectureSeule,
+      refus,
+      actionsCompte,
       personne,
       personnes,
       personnesArchivees,
@@ -530,7 +603,7 @@ export function DossierProvider({ children }: { children: ReactNode }) {
       limiteAtteinte: personnes.length >= LIMITE_DOSSIERS,
       actions,
     }
-  }, [etat, pret, actions])
+  }, [etat, pret, actions, actionsCompte, lectureSeule, refus])
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>
 }

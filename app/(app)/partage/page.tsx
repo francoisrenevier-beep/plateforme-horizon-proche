@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 const durees = ['24 heures', '7 jours', '30 jours']
 
 export default function PartagePage() {
-  const { personne, dossier, actions } = useDossier()
+  const { personne, dossier, actions, lectureSeule } = useDossier()
   const [selection, setSelection] = useState<string[]>([])
   const [portraitInclus, setPortraitInclus] = useState(false)
   const [duree, setDuree] = useState('7 jours')
@@ -26,8 +26,11 @@ export default function PartagePage() {
   }
 
   function generer() {
-    const jeton = Math.random().toString(36).slice(2, 10)
-    setGenere(`horizon-proche.ch/c/${jeton}`)
+    if (lectureSeule) return
+    // Jeton imprévisible. En production, la clé de lecture de la sélection voyagera dans le
+    // fragment (#…), qui n'est jamais transmis au serveur : le lien reste « zéro connaissance ».
+    const jeton = Array.from(crypto.getRandomValues(new Uint8Array(12)), (o) => o.toString(16).padStart(2, '0')).join('')
+    setGenere(`horizon-proche.ch/c/${jeton.slice(0, 10)}#${jeton.slice(10)}`)
     actions.journaliser(`Lien de consultation créé (${total} élément${total > 1 ? 's' : ''}, ${duree})`)
   }
 
@@ -150,12 +153,13 @@ export default function PartagePage() {
           </p>
           <button
             onClick={generer}
-            disabled={total === 0}
+            disabled={total === 0 || lectureSeule}
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-teal-900 px-5 py-3 text-sm font-medium text-creme transition-colors hover:bg-teal-700 disabled:opacity-40"
           >
             <Link2 className="size-4" aria-hidden />
             Générer un lien de consultation
           </button>
+          {lectureSeule && <p className="etiquette mt-2">Le partage est en pause tant que l’abonnement n’est pas réactivé.</p>}
 
           {genere && (
             <div className="mt-4 rounded-xl border border-teal-700/25 bg-teal-50 p-4">

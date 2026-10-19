@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 
-const liensLegaux = ['Mentions légales', 'Confidentialité', 'Conditions d’utilisation']
+// Seule la page Confidentialité existe à ce stade ; les deux autres restent à rédiger.
+const liensLegaux: { libelle: string; href?: string }[] = [
+  { libelle: 'Mentions légales' },
+  { libelle: 'Confidentialité', href: '/confidentialite' },
+  { libelle: 'Conditions d’utilisation' },
+]
 
 export default function SiteGroupLayout({ children }: { children: ReactNode }) {
   return (
@@ -27,7 +32,15 @@ export default function SiteGroupLayout({ children }: { children: ReactNode }) {
           <span>© {new Date().getFullYear()} Horizon Proche</span>
           <ul className="flex flex-wrap gap-x-6 gap-y-2">
             {liensLegaux.map((lien) => (
-              <li key={lien}>{lien}</li>
+              <li key={lien.libelle}>
+                {lien.href ? (
+                  <Link href={lien.href} className="hover:text-teal-700 hover:underline">
+                    {lien.libelle}
+                  </Link>
+                ) : (
+                  lien.libelle
+                )}
+              </li>
             ))}
           </ul>
         </div>
